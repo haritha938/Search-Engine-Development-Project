@@ -12,8 +12,10 @@ import cecs429.text.EnglishTokenStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 
 public class BetterTermDocumentIndexer {
+
 	public static void main(String[] args) {
 		DocumentCorpus corpus = DirectoryCorpus.loadJsonDirectory(Paths.get("").toAbsolutePath(), ".json");
 		Index index = indexCorpus(corpus) ;
@@ -40,7 +42,10 @@ public class BetterTermDocumentIndexer {
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
 			for(String string: strings){
-				vocabulary.add(processor.processToken(string));
+                List<String> stringList=processor.processToken(string);
+			    for(String s:stringList){
+                    vocabulary.add(s);
+                }
 			}
 			try {
 				englishTokenStream.close();
@@ -55,9 +60,11 @@ public class BetterTermDocumentIndexer {
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
-			for(String string: strings){
-				index.addTerm(processor.processToken(string), document.getId());
-			}
+            for(String string: strings){
+                for(String term:processor.processToken(string)) {
+                    index.addTerm(term, document.getId());
+                }
+            }
 			try {
 				englishTokenStream.close();
 			} catch (IOException e) {
@@ -66,4 +73,5 @@ public class BetterTermDocumentIndexer {
 		}
 		return index;
 	}
+
 }
