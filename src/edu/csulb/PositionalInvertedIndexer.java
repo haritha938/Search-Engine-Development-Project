@@ -116,11 +116,10 @@ public class PositionalInvertedIndexer  {
 			Iterable<String> strings=englishTokenStream.getTokens();
 			int i=1;
 			for(String string: strings){
-				i=1;
 			    for(String term:processor.processToken(string)) {
                     index.addTerm(term, document.getId(), i);
-                    i++;
 				}
+				i++;
 			}
 			try {
 				englishTokenStream.close();
