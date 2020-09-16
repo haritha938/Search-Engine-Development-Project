@@ -38,20 +38,26 @@ public class AdvanceTokenProcessor implements TokenProcessor {
         //TODO: Need to add stemming code
         if(term.indexOf('-')==-1){
             term = term.toLowerCase(Locale.ENGLISH);
-            terms.add(term);            
+            //terms.add(term);
+            terms.add(stemProcess(term));
         }else{
-            terms.addAll(Arrays.asList(term.split("-")));
-            terms.add(term.replaceAll("-",""));
+           // terms.addAll(Arrays.asList(term.split("-")));
+           String[] arrofStr=term.split("-");
+           for(String a: arrofStr){
+               terms.add(stemProcess(a));
+           }
+            terms.add(stemProcess(term.replaceAll("-","")));
         }
 		return terms;
     }
 
-    /*
-    String stemProcess(string token){
-        String language = "english";
-        Class stemClass = Class.forName("org.tartarus.snowball.ext." + language + "Stemmer");
-        SnowballStemmer stemmer = (SnowballStemmer) stemClass.newInstance();
 
-    }
-    */
+    String stemProcess(String token) {
+        Stemmer s=new Stemmer();
+        char[] n=token.toCharArray();
+        s.add(n,n.length);
+        s.stem();
+        String u=s.toString();
+        return u;
+	}
 }
