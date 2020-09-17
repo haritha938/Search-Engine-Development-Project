@@ -13,14 +13,11 @@ import java.util.stream.Collectors;
  * An AndQuery composes other Query objects and merges their postings in an intersection-like operation.
  */
 public class AndQuery implements Query {
-	//private List<Query> mChildren;
+
 	private List<Query> mChildren;
 	
 	public AndQuery(Iterable<Query> children) {
 		mChildren = new ArrayList<>((Collection<? extends Query>) children);
-
-
-
 	}
 	
 	@Override
