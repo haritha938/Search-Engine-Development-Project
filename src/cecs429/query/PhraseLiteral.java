@@ -2,11 +2,11 @@ package cecs429.query;
 
 import cecs429.index.Index;
 import cecs429.index.Posting;
-import javafx.geometry.Pos;
-
+import cecs429.text.Stemmer;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.List;
+
 
 /**
  * Represents a phrase literal consisting of one or more terms that must occur in sequence.
@@ -31,19 +31,48 @@ public class PhraseLiteral implements Query {
 		terms=terms.substring(terms.indexOf("\"")< size-1? terms.indexOf("\"")+1:0,size-1);
 		System.out.println("Phrase Literal terms:"+terms);
 		//end hn
-		mTerms.addAll(Arrays.asList(terms.split(" ")));
+		for(String term: terms.split(" ")) {
+			StringBuilder builder = new StringBuilder(term);
+			int i = 0;
+			while (i < builder.length()) {
+				if (Character.isDigit(builder.charAt(i)) || Character.isLetter(builder.charAt(i)))
+					break;
+				i++;
+			}
+			if (i != 0)
+				builder.delete(0, i - 1);
+
+			int j = builder.length() - 1;
+			while (j >= 0) {
+				if (Character.isDigit(builder.charAt(j)) || Character.isLetter(builder.charAt(j)))
+					break;
+				j--;
+			}
+			if (j != builder.length() - 1)
+				builder.delete(j + 1, builder.length());
+			 term = builder.toString().replaceAll("\"|'", "");
+			//TODO: Need to add stemming code
+			if (term.indexOf('-') == -1) {
+
+				mTerms.add(stemProcess(term));
+			} else {
+
+				mTerms.add(stemProcess(term.replaceAll("-", "")));
+			}
+		}
+
 	}
 	
 	@Override
 	public List<Posting> getPostings(Index index) {
 		// TODO: program this method. Retrieve the postings for the individual terms in the phrase,
 		// and positional merge them together.
-		List<Posting> postingListResult=index.getPostings(mTerms.get(0));
+		List<Posting> postingListResult=index.getPostings(stemProcess(mTerms.get(0)));
 		List<Posting> postingListInput=null;
 		int distanceBetweenTerms=0;
 		for(int i=1;i<mTerms.size();i++)
 		{
-			postingListInput=index.getPostings(mTerms.get(i));
+			postingListInput=index.getPostings(stemProcess(mTerms.get(i)));
 			postingListResult=PositionalMerge(postingListResult,postingListInput,++distanceBetweenTerms);
 			if(postingListResult==null)
 			{
@@ -70,8 +99,15 @@ public class PhraseLiteral implements Query {
 			{
 				Posting mergedPosting=Merge(Postings_one.get(i).getPositions(),Postings_two.get(j).getPositions(),Posting_one_docId,distance);
 				if(mergedPosting!=null)
+				{
+					if (Result == null)
+					{
+						Result = new ArrayList<>();
+					}
 					Result.add(mergedPosting);
-
+				}
+				i++;
+				j++;
 			}
 			else if(Posting_one_docId < Posting_two_docId)
 			{
@@ -109,6 +145,8 @@ public class PhraseLiteral implements Query {
 				{
 					resultantPosting.addPositionToExistingTerm(postionOf_doc1);
 				}
+				i++;
+				j++;
 			}
 			else if(postionOf_doc2 > postionOf_doc1+ distance)
 			{
@@ -125,5 +163,13 @@ public class PhraseLiteral implements Query {
 	@Override
 	public String toString() {
 		return "\"" + String.join(" ", mTerms) + "\"";
+	}
+	String stemProcess(String queryWord) {
+		Stemmer s=new Stemmer();
+		char[] n=queryWord.toCharArray();
+		s.add(n,n.length);
+		s.stem();
+		String u=s.toString();
+		return u;
 	}
 }
