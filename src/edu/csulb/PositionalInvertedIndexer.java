@@ -23,11 +23,14 @@ public class PositionalInvertedIndexer  {
 
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
-	    System.out.println("Please enter your desired search directory...");
+		System.out.println("Please enter your desired search directory...");
 		try {
 			Path path = Paths.get(reader.readLine());
 			DocumentCorpus corpus = DirectoryCorpus.loadTextDirectory(path.toAbsolutePath(), ".txt");
+			long startTime=System.nanoTime();
 			Index index = indexCorpus(corpus);
+			long endTime=System.nanoTime();
+			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
 			//TODO: A full query parser; for now, we'll only support single-term queries.
 			System.out.println("Please enter your search query...");
 			String query=null;
@@ -40,62 +43,72 @@ public class PositionalInvertedIndexer  {
 				//TODO: Tokenization of input ":stem token"
 
 
-					if (query.equals(":q")) {
-						break;
-					} else if (query.startsWith(":index")) {
-						path = Paths.get(query.substring(query.indexOf(' ') + 1));
-						corpus = DirectoryCorpus.loadTextDirectory(path.toAbsolutePath(), ".txt");
-						index = indexCorpus(corpus);
+				if (query.equals(":q")) {
+					break;
+				} else if (query.startsWith(":index")) {
+					path = Paths.get(query.substring(query.indexOf(' ') + 1));
+					corpus = DirectoryCorpus.loadTextDirectory(path.toAbsolutePath(), ".txt");
+					index = indexCorpus(corpus);
+				}
+				else if(query.startsWith(":stem")){
+					String tokenTerm=query.substring(query.indexOf(' ')+1);
+					AdvanceTokenProcessor processor = new AdvanceTokenProcessor();
+					System.out.println(processor.processToken(tokenTerm));
+				}
+				else if (query.equals(":vocab")) {
+					index.getVocabulary()
+							.stream()
+							.limit(1000)
+							.forEach(System.out::println);
+				} else {
+					BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+					Query queryobject = booleanQueryParser.parseQuery(query.toLowerCase().trim());
+					List<Posting> resultList = null;
+					if (queryobject != null) {
+						resultList = queryobject.getPostings(index);
 					}
-					else if(query.startsWith(":stem")){
-							String tokenTerm=query.substring(query.indexOf(' ')+1);
-						AdvanceTokenProcessor processor = new AdvanceTokenProcessor();
-						System.out.println(processor.processToken(tokenTerm));
-					}
-					else if (query.equals(":vocab")) {
-						index.getVocabulary()
-								.stream()
-								.limit(1000)
-								.forEach(System.out::println);
-					} else {
-						BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
-						Query queryobject = booleanQueryParser.parseQuery(query.toLowerCase().trim());
-						List<Posting> resultList = null;
-						if (queryobject != null) {
-							resultList = queryobject.getPostings(index);
+					//List<Posting> resultList = index.getPostings(query.toLowerCase());
+					if (resultList != null) {
+						for (Posting p : resultList) {
+							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
 						}
-						//List<Posting> resultList = index.getPostings(query.toLowerCase());
-						if (resultList != null) {
-							for (Posting p : resultList) {
-								System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
+						System.out.println("Total number of documents fetched: " + resultList.size());
+
+						while(true)
+						{
+
+							System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
+							documentName = reader.readLine();
+							if(documentName.toLowerCase().equals("query"))
+							{
+								break;
 							}
-							System.out.println("Total number of documents fetched: " + resultList.size());
-
-							while(true) {
-								System.out.println("Select a document to view the content: ");
-								documentName = reader.readLine();
-								String filePath = path + "/" + documentName;
-								found=false;
-								for(Posting p: resultList) {
-									if (documentName.equals(corpus.getDocument(p.getDocumentId()).getTitle())) {
-										printDocument(filePath);
-										found=true;
-									}
+							String filePath = path + "/" + documentName;
+							found=false;
+							for(Posting p: resultList) {
+								if (documentName.equals(corpus.getDocument(p.getDocumentId()).getTitle())) {
+									printDocument(filePath);
+									found=true;
 								}
-								if(found==false)
-									System.out.println("Enter document names from the above list !");
+							}
+							if(found==false) {
+								System.out.println("Wrong document name. Enter document names from the above list !");
+							}
+							else {
+								System.out.println("Do you want to print other selected documents ? (yes/no)");
 
-								System.out.println("Do you want to print other selected documents ?");
-								String answer=reader.readLine();
-								if(answer.equals("yes"))
-										continue;
+								String answer = reader.readLine().toLowerCase();
+								if (answer.equals("yes"))
+									continue;
 								break;
 							}
 
-						} else {
-							System.out.println("No such text can be found in the Corpus!");
 						}
+
+					} else {
+						System.out.println("No such text can be found in the Corpus!");
 					}
+				}
 				System.out.println("Please enter your search query...");
 				query=reader.readLine();
 			}
@@ -105,19 +118,19 @@ public class PositionalInvertedIndexer  {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static Index indexCorpus(DocumentCorpus corpus) {
 		HashSet<String> vocabulary = new HashSet<>();
 		AdvanceTokenProcessor processor = new AdvanceTokenProcessor();
 
-        PositionalInvertedIndex index = new PositionalInvertedIndex();
-        for(Document document:corpus.getDocuments()){
+		PositionalInvertedIndex index = new PositionalInvertedIndex();
+		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
 			int i=1;
 			for(String string: strings){
-			    for(String term:processor.processToken(string)) {
-                    index.addTerm(term, document.getId(), i);
+				for(String term:processor.processToken(string)) {
+					index.addTerm(term, document.getId(), i);
 				}
 				i++;
 			}
