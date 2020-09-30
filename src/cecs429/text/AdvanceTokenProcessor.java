@@ -1,5 +1,7 @@
 package cecs429.text;
 
+import org.tartarus.snowball.SnowballStemmer;
+
 import java.lang.StringBuilder;
 import java.lang.String;
 import java.util.*;
@@ -39,25 +41,44 @@ public class AdvanceTokenProcessor implements TokenProcessor {
         if(term.indexOf('-')==-1){
             term = term.toLowerCase(Locale.ENGLISH);
             //terms.add(term);
-            terms.add(stemProcess(term));
+            try {
+                terms.add(stemProcess(term));
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
         }else{
            // terms.addAll(Arrays.asList(term.split("-")));
            String[] arrofStr=term.split("-");
            for(String a: arrofStr){
-               terms.add(stemProcess(a));
+               try {
+                   terms.add(stemProcess(a));
+               } catch (Throwable throwable) {
+                   throwable.printStackTrace();
+               }
            }
-            terms.add(stemProcess(term.replaceAll("-","")));
+            try {
+                terms.add(stemProcess(term.replaceAll("-","")));
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
         }
 		return terms;
     }
 
 
-    String stemProcess(String token) {
-        Stemmer s=new Stemmer();
+    String stemProcess(String token) throws Throwable{
+       /* Stemmer s=new Stemmer();
         char[] n=token.toCharArray();
         s.add(n,n.length);
         s.stem();
         String u=s.toString();
         return u;
+        */
+        Class stemClass = Class.forName("org.tartarus.snowball.ext.englishStemmer");
+        SnowballStemmer stemmer = (SnowballStemmer) stemClass.newInstance();
+        stemmer.setCurrent(token);
+        stemmer.stem();
+        return stemmer.getCurrent();
+
 	}
 }
