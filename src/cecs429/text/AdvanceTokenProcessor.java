@@ -18,46 +18,26 @@ public class AdvanceTokenProcessor implements TokenProcessor {
 	@Override
 	public List<String> processToken(String token) {
         List<String> terms = new ArrayList();
-        StringBuilder builder = new StringBuilder(token);
-        int i=0;
-        while(i<builder.length()){
-            if(Character.isDigit(builder.charAt(i)) || Character.isLetter(builder.charAt(i)))
-                break;
-            i++;
-        }
-        if(i!=0)
-            builder.delete(0,i-1);
+        String term=normalization(token.toLowerCase(Locale.ENGLISH).replaceAll("[\"']", ""));
 
-        int j=builder.length()-1;
-        while(j>=0){
-            if(Character.isDigit(builder.charAt(j)) || Character.isLetter(builder.charAt(j)))
-                break;
-            j--;
-        }
-        if(j!=builder.length()-1)
-            builder.delete(j+1,builder.length());
-        String term = builder.toString().replaceAll("\"|'", "");
         //TODO: Need to add stemming code
         if(term.indexOf('-')==-1){
-            term = term.toLowerCase(Locale.ENGLISH);
-            //terms.add(term);
             try {
-                terms.add(stemProcess(term));
+                terms.add(stemProcess(normalization(term)));
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
         }else{
-           // terms.addAll(Arrays.asList(term.split("-")));
-           String[] arrofStr=term.split("-");
+           String[] arrofStr=term.split("-+");
            for(String a: arrofStr){
                try {
-                   terms.add(stemProcess(a));
+                   terms.add(stemProcess(normalization(a)));
                } catch (Throwable throwable) {
                    throwable.printStackTrace();
                }
            }
             try {
-                terms.add(stemProcess(term.replaceAll("-","")));
+                terms.add(stemProcess(normalization(term.replaceAll("-+",""))));
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
@@ -79,6 +59,27 @@ public class AdvanceTokenProcessor implements TokenProcessor {
         stemmer.setCurrent(token);
         stemmer.stem();
         return stemmer.getCurrent();
-
 	}
+
+    private String normalization(String builder){
+        String result =builder;
+	    int i=0;
+        while(i<result.length()){
+            if(Character.isDigit(result.charAt(i)) || Character.isLetter(result.charAt(i)))
+                break;
+            i++;
+        }
+        if(i!=0)
+            result=result.substring(0,i);
+
+        int j=result.length()-1;
+        while(j>=0){
+            if(Character.isDigit(result.charAt(j)) || Character.isLetter(result.charAt(j)))
+                break;
+            j--;
+        }
+        if(j!=result.length()-1)
+            result=result.substring(0,j+1);
+        return result;
+    }
 }
