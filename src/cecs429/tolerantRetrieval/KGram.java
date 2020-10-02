@@ -12,20 +12,19 @@ public class KGram {
         this.kGramIndex = new HashMap<>();
     }
 
-    public Map<String, List<String>> getkGramIndex(Index index) {
-        processKGram(index);
+    public Map<String, List<String>> getkGramIndex(List<String> mVocabulary) {
+        processKGram(mVocabulary);
         return kGramIndex;
     }
 
-    private void processKGram(Index index){
-        List<String> mVocabulary = index.getVocabulary();
+    private void processKGram(List<String> mVocabulary){
         String lastProcessedWord ="";
         for(int k = 1;k<=kGramSize;k++) {
 
             for (String word : mVocabulary) {
                 if(lastProcessedWord.equals(word))
                     continue;
-                String modifiedWord="";
+                String modifiedWord;
                 if(word.length()!=1)
                     modifiedWord = "$" + word + "$";
                 else

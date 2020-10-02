@@ -1,15 +1,19 @@
 package cecs429.index;
 
+import cecs429.tolerantRetrieval.KGram;
+
 import java.util.*;
 
 public class PositionalInvertedIndex implements Index {
     
     private final Map<String, List<Posting>> mIndex;
     private List<String> mVocabulary;
+    private Map<String,List<String>> kGramsOfVocabulary;
 
     public PositionalInvertedIndex(){
-        mIndex = new HashMap();
-        mVocabulary = new ArrayList();
+        mIndex = new HashMap<>();
+        mVocabulary = new ArrayList<>();
+        kGramsOfVocabulary = new HashMap<>();
     }
 
     public void addTerm(String term, int documentId,int position){
@@ -28,7 +32,7 @@ public class PositionalInvertedIndex implements Index {
 
         }else{
             Posting newPosting = new Posting(documentId, position);
-            List<Posting> postingsOfTerm = new ArrayList();
+            List<Posting> postingsOfTerm = new ArrayList<>();
             postingsOfTerm.add(newPosting);
             mIndex.put(term, postingsOfTerm);
             //mVocabulary.add(term);
@@ -48,7 +52,22 @@ public class PositionalInvertedIndex implements Index {
         Collections.sort(mVocabulary);
         return Collections.unmodifiableList(mVocabulary);
     }
+
     public void addToVocab(String token){
         mVocabulary.add(token);
+    }
+
+    /**
+     * Returns k-gram for the @mVocabulary
+     * @return
+     */
+    @Override
+    public Map<String, List<String>> getKGrams() {
+        return Collections.unmodifiableMap(kGramsOfVocabulary);
+    }
+
+    public void generateKGrams(int kGramSize){
+        KGram kGram = new KGram(kGramSize);
+        kGramsOfVocabulary = kGram.getkGramIndex(getVocabulary());
     }
 }

@@ -18,7 +18,7 @@ public class TermDocumentIndex implements Index {
 	 */
 	public TermDocumentIndex(Collection<String> vocabulary, int corpuseSize) {
 		mMatrix = new boolean[vocabulary.size()][corpuseSize];
-		mVocabulary = new ArrayList<String>();
+		mVocabulary = new ArrayList<>();
 		mVocabulary.addAll(vocabulary);
 		mCorpusSize = corpuseSize;
 		
@@ -54,5 +54,15 @@ public class TermDocumentIndex implements Index {
 	
 	public List<String> getVocabulary() {
 		return Collections.unmodifiableList(mVocabulary);
+	}
+
+	@Override
+	public Map<String, List<String>> getKGrams() {
+		return null;
+	}
+
+	@Override
+	public void generateKGrams(int kGramSize) {
+
 	}
 }

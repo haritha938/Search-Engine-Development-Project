@@ -3,13 +3,12 @@ package cecs429.query;
 import cecs429.index.Index;
 import cecs429.index.Posting;
 import cecs429.text.TokenProcessor;
-import cecs429.tolerantRetrieval.KGram;
 
 import java.util.*;
 
 public class WildcardLiteral implements Query {
-    String queryTerm="";
-    String modifiedTerm="";
+    String queryTerm;
+    String modifiedTerm;
     TokenProcessor tokenProcessor;
     public WildcardLiteral(String term, TokenProcessor tokenProcessor) {
         queryTerm = term;
@@ -37,8 +36,8 @@ public class WildcardLiteral implements Query {
                 }
             }
         }
-        KGram kGram = new KGram(3);
-        Map<String,List<String>> kGramIndex = new HashMap<>(kGram.getkGramIndex(index));
+
+        Map<String,List<String>> kGramIndex = index.getKGrams();
 /*        String smallLengthKGram="";
         int smallLen=Integer.MAX_VALUE;
         for(String string:kGramSearchTerm){
@@ -91,7 +90,6 @@ public class WildcardLiteral implements Query {
                             break;
                         }else{
                             lastIndex = 0;
-                            continue;
                         }
                     }
                     else if(searchWord.indexOf("$")==searchWord.length()-1){
@@ -100,7 +98,6 @@ public class WildcardLiteral implements Query {
                             break;
                         }else{
                             lastIndex = searchWord.length()-1;
-                            continue;
                         }
                     }
                     else if(kgram.indexOf(searchWord)<lastIndex){

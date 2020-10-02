@@ -44,6 +44,7 @@ public class PositionalInvertedIndexer  {
 			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 			long startTime=System.nanoTime();
 			Index index = indexCorpus(corpus);
+			index.generateKGrams(3);
 			long endTime=System.nanoTime();
 			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
 			//TODO: A full query parser; for now, we'll only support single-term queries.
@@ -59,6 +60,7 @@ public class PositionalInvertedIndexer  {
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 					index = indexCorpus(corpus);
+					index.generateKGrams(3);
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
@@ -98,7 +100,7 @@ public class PositionalInvertedIndexer  {
 									found=true;
 								}
 							}
-							if(found==false) {
+							if(!found) {
 								System.out.println("Wrong document name. Enter document names from the above list !");
 							}
 							else {
