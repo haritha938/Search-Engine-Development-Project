@@ -19,8 +19,18 @@ public class KGram {
 
     private void processKGram(Index index){
         List<String> mVocabulary = index.getVocabulary();
-        for(String word:mVocabulary){
-            if(word.length()<kGramSize) {
+        String lastProcessedWord ="";
+        for(int k = 1;k<=kGramSize;k++) {
+
+            for (String word : mVocabulary) {
+                if(lastProcessedWord.equals(word))
+                    continue;
+                String modifiedWord="";
+                if(word.length()!=1)
+                    modifiedWord = "$" + word + "$";
+                else
+                    modifiedWord=word;
+/*            if(word.length()<k) {
                 List<String> stringList;
                 //Create new list or fetch existing list, word at the end and add to Map
                 if (kGramIndex.containsKey(word))
@@ -30,9 +40,9 @@ public class KGram {
 
                 stringList.add(word);
                 kGramIndex.put(word,stringList);
-            }else{
-                for(int i=0;i<word.length()-kGramSize;i++){
-                    String string = word.substring(i,i+kGramSize);
+            }else{*/
+                for (int i = 0; i < modifiedWord.length() - k+1; i++) {
+                    String string = modifiedWord.substring(i, i + k);
                     List<String> stringList;
                     //Create new list or fetch existing list, word at the end and add to Map
                     if (kGramIndex.containsKey(string))
@@ -41,30 +51,9 @@ public class KGram {
                         stringList = new ArrayList<>();
 
                     stringList.add(word);
-                    kGramIndex.put(string,stringList);
+                    kGramIndex.put(string, stringList);
                 }
-
-                String origin = word.substring(0,kGramSize-1);
-                List<String> stringList;
-                //Create new list or fetch existing list, word at the end and add to Map
-                if (kGramIndex.containsKey(origin))
-                    stringList = kGramIndex.get(origin);
-                else
-                    stringList = new ArrayList<>();
-
-                stringList.add(origin);
-                kGramIndex.put(origin,stringList);
-
-
-                String trailing = word.substring(word.length()-kGramSize+1);
-                //Create new list or fetch existing list, word at the end and add to Map
-                if (kGramIndex.containsKey(trailing))
-                    stringList = kGramIndex.get(trailing);
-                else
-                    stringList = new ArrayList<>();
-
-                stringList.add(trailing);
-                kGramIndex.put(trailing,stringList);
+                lastProcessedWord = word;
             }
         }
     }
