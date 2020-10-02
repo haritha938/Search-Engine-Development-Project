@@ -3,6 +3,8 @@ package cecs429.query;
 import cecs429.index.Index;
 import cecs429.index.Posting;
 import cecs429.text.Stemmer;
+import cecs429.text.TokenProcessor;
+
 import java.util.ArrayList;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
 public class PhraseLiteral implements Query {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
-	
+	TokenProcessor tokenProcessor;
 	/**
 	 * Constructs a PhraseLiteral with the given individual phrase terms.
 	 */
@@ -25,40 +27,15 @@ public class PhraseLiteral implements Query {
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms separated by spaces.
 	 */
-	public PhraseLiteral(String terms) {
+	public PhraseLiteral(String terms, TokenProcessor tokenProcessor) {
+
 		//hn
 		int size=terms.length();
 		terms=terms.substring(terms.indexOf("\"")< size-1? terms.indexOf("\"")+1:0,size-1);
 		System.out.println("Phrase Literal terms:"+terms);
 		//end hn
 		for(String term: terms.split(" ")) {
-			StringBuilder builder = new StringBuilder(term);
-			int i = 0;
-			while (i < builder.length()) {
-				if (Character.isDigit(builder.charAt(i)) || Character.isLetter(builder.charAt(i)))
-					break;
-				i++;
-			}
-			if (i != 0)
-				builder.delete(0, i - 1);
-
-			int j = builder.length() - 1;
-			while (j >= 0) {
-				if (Character.isDigit(builder.charAt(j)) || Character.isLetter(builder.charAt(j)))
-					break;
-				j--;
-			}
-			if (j != builder.length() - 1)
-				builder.delete(j + 1, builder.length());
-			 term = builder.toString().replaceAll("\"|'", "");
-			//TODO: Need to add stemming code
-			if (term.indexOf('-') == -1) {
-
-				mTerms.add(stemProcess(term));
-			} else {
-
-				mTerms.add(stemProcess(term.replaceAll("-", "")));
-			}
+			mTerms.add(tokenProcessor.processToken(term).get(0));
 		}
 
 	}
@@ -67,12 +44,12 @@ public class PhraseLiteral implements Query {
 	public List<Posting> getPostings(Index index) {
 		// TODO: program this method. Retrieve the postings for the individual terms in the phrase,
 		// and positional merge them together.
-		List<Posting> postingListResult=index.getPostings(stemProcess(mTerms.get(0)));
+		List<Posting> postingListResult=index.getPostings(mTerms.get(0));
 		List<Posting> postingListInput=null;
 		int distanceBetweenTerms=0;
 		for(int i=1;i<mTerms.size();i++)
 		{
-			postingListInput=index.getPostings(stemProcess(mTerms.get(i)));
+			postingListInput=index.getPostings(mTerms.get(i));
 			postingListResult=PositionalMerge(postingListResult,postingListInput,++distanceBetweenTerms);
 			if(postingListResult==null)
 			{
@@ -163,13 +140,5 @@ public class PhraseLiteral implements Query {
 	@Override
 	public String toString() {
 		return "\"" + String.join(" ", mTerms) + "\"";
-	}
-	String stemProcess(String queryWord) {
-		Stemmer s=new Stemmer();
-		char[] n=queryWord.toCharArray();
-		s.add(n,n.length);
-		s.stem();
-		String u=s.toString();
-		return u;
 	}
 }

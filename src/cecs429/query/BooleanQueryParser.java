@@ -1,5 +1,7 @@
 package cecs429.query;
 
+import cecs429.text.TokenProcessor;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,12 @@ import java.util.List;
  * Does not handle phrase queries, NOT queries, NEAR queries, or wildcard queries... yet.
  */
 public class BooleanQueryParser {
+	TokenProcessor tokenProcessor;
+
+	public BooleanQueryParser(TokenProcessor tokenProcessor){
+		this.tokenProcessor = tokenProcessor;
+	}
+
 	/**
 	 * Identifies a portion of a string with a starting index and a length.
 	 */
@@ -203,18 +211,21 @@ public class BooleanQueryParser {
 		}
 		// This is a term literal containing a single term.
 		if(isPhraseLiteral==false) {
-			return new Literal(
-					new StringBounds(startIndex, lengthOut),
-
-					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut)) );
-
-		}
-		else
-		{
+				if (subquery.substring(startIndex,lengthOut).indexOf("*")!=-1){
+					return new Literal(
+							new StringBounds(startIndex,lengthOut),
+							new WildcardLiteral(subquery.substring(startIndex,startIndex+lengthOut),tokenProcessor)
+					);
+				}else{
+					return new Literal(
+							new StringBounds(startIndex, lengthOut),
+							new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut),tokenProcessor));
+				}
+		}else{
 			return new Literal(
 					new StringBounds(startIndex, lengthOut+1),
 					//string.substring(startIndex,EndIndex)--> here startIndex in inclusive and EndIndex is exclusive
-					new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut + 1)));
+					new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut + 1),tokenProcessor));
 					//for PhraseLiteral getPostings, at the beginning remove the start and end quotations
 		}
 		/*

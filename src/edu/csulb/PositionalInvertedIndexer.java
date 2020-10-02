@@ -10,6 +10,7 @@ import cecs429.query.BooleanQueryParser;
 import cecs429.query.Query;
 import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.EnglishTokenStream;
+import cecs429.text.TokenProcessor;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -23,6 +24,7 @@ public class PositionalInvertedIndexer  {
 
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
+		TokenProcessor tokenProcessor = new AdvanceTokenProcessor();
 		System.out.println("Please enter your desired search directory...");
 		try {
 			Path path = Paths.get(reader.readLine());
@@ -52,8 +54,7 @@ public class PositionalInvertedIndexer  {
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
-					AdvanceTokenProcessor processor = new AdvanceTokenProcessor();
-					System.out.println(processor.processToken(tokenTerm));
+					System.out.println(tokenProcessor.processToken(tokenTerm));
 				}
 				else if (query.equals(":vocab")) {
 					index.getVocabulary()
@@ -61,12 +62,12 @@ public class PositionalInvertedIndexer  {
 							.limit(1000)
 							.forEach(System.out::println);
 				} else {
-					BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+					BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);
 					Query queryobject = booleanQueryParser.parseQuery(query.toLowerCase().trim());
 					List<Posting> resultList = null;
 					if (queryobject != null) {
 						resultList = queryobject.getPostings(index);
-					}
+					} 
 					//List<Posting> resultList = index.getPostings(query.toLowerCase());
 					if (resultList != null) {
 						for (Posting p : resultList) {
