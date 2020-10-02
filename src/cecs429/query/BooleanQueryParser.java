@@ -211,7 +211,7 @@ public class BooleanQueryParser {
 		}
 		// This is a term literal containing a single term.
 		if(isPhraseLiteral==false) {
-				if (subquery.substring(startIndex,lengthOut).indexOf("*")!=-1){
+				if (subquery.substring(startIndex,startIndex+lengthOut).contains("*")){
 					return new Literal(
 							new StringBounds(startIndex,lengthOut),
 							new WildcardLiteral(subquery.substring(startIndex,startIndex+lengthOut),tokenProcessor)
