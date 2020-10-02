@@ -41,7 +41,7 @@ public class PositionalInvertedIndexer  {
 			}
 			System.out.println("Please enter your desired search directory...");
 			Path path = Paths.get(reader.readLine());
-			DocumentCorpus corpus = DirectoryCorpus.loadTextDirectory(path.toAbsolutePath(), ".txt");
+			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 			long startTime=System.nanoTime();
 			Index index = indexCorpus(corpus);
 			long endTime=System.nanoTime();
@@ -57,7 +57,7 @@ public class PositionalInvertedIndexer  {
 					break;
 				} else if (query.startsWith(":index")) {
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
-					corpus = DirectoryCorpus.loadTextDirectory(path.toAbsolutePath(), ".txt");
+					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 					index = indexCorpus(corpus);
 				}
 				else if(query.startsWith(":stem")){

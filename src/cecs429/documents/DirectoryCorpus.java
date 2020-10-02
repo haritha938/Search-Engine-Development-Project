@@ -162,4 +162,16 @@ public class DirectoryCorpus implements DocumentCorpus {
 		corpus.registerFileDocumentFactory(fileExtension, JsonFileDocument::loadJsonFileDocument);
 		return corpus;
 	}
+
+	/**
+	 * Constructs a corpus over given directory for files with extension ".txt" and ".json"
+	 * @param absolutePath
+	 * @return
+	 */
+	public static DirectoryCorpus loadDirectory(Path absolutePath){
+		DirectoryCorpus corpus = new DirectoryCorpus(absolutePath);
+		corpus.registerFileDocumentFactory(".json", JsonFileDocument::loadJsonFileDocument);
+		corpus.registerFileDocumentFactory(".txt", TextFileDocument::loadTextFileDocument);
+		return corpus;
+	}
 }
