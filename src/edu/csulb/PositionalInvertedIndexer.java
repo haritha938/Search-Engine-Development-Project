@@ -134,6 +134,7 @@ public class PositionalInvertedIndexer  {
 					index.addTerm(term, document.getId(), i);
 				}
 				i++;
+				index.addToVocab(string);
 			}
 			try {
 				englishTokenStream.close();
