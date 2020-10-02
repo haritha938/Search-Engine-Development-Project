@@ -31,7 +31,7 @@ public class PositionalInvertedIndex implements Index {
             List<Posting> postingsOfTerm = new ArrayList();
             postingsOfTerm.add(newPosting);
             mIndex.put(term, postingsOfTerm);
-            mVocabulary.add(term);
+            //mVocabulary.add(term);
         }
     }
 
@@ -47,5 +47,8 @@ public class PositionalInvertedIndex implements Index {
     public List<String> getVocabulary(){
         Collections.sort(mVocabulary);
         return Collections.unmodifiableList(mVocabulary);
+    }
+    public void addToVocab(String token){
+        mVocabulary.add(token);
     }
 }
