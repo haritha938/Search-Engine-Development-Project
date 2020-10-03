@@ -9,7 +9,9 @@ import cecs429.index.Posting;
 import cecs429.query.BooleanQueryParser;
 import cecs429.query.Query;
 import cecs429.text.AdvanceTokenProcessor;
+import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
+import cecs429.text.TokenProcessor;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -18,17 +20,31 @@ import java.util.HashSet;
 import java.util.List;
 
 public class PositionalInvertedIndexer  {
+	static TokenProcessor tokenProcessor = null;
 
 	public static void main(String[] args) {
 
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
-		System.out.println("Please enter your desired search directory...");
 		try {
+			System.out.println("Enter your preferred token processor's serial from below options");
+			System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
+			System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
+			int tokenizationInput = Integer.parseInt(reader.readLine());
+			switch (tokenizationInput){
+				case 1:
+					tokenProcessor = new BasicTokenProcessor();
+					break;
+				case 2:
+					tokenProcessor = new AdvanceTokenProcessor();
+					break;
+			}
+			System.out.println("Please enter your desired search directory...");
 			Path path = Paths.get(reader.readLine());
-			DocumentCorpus corpus = DirectoryCorpus.loadTextDirectory(path.toAbsolutePath(), ".txt");
+			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 			long startTime=System.nanoTime();
 			Index index = indexCorpus(corpus);
+			index.generateKGrams(3);
 			long endTime=System.nanoTime();
 			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
 			//TODO: A full query parser; for now, we'll only support single-term queries.
@@ -38,22 +54,17 @@ public class PositionalInvertedIndexer  {
 			String documentName=null;
 			boolean found;
 			while (query.length()>0) {
-
-
-				//TODO: Tokenization of input ":stem token"
-
-
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
-					corpus = DirectoryCorpus.loadTextDirectory(path.toAbsolutePath(), ".txt");
+					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 					index = indexCorpus(corpus);
+					index.generateKGrams(3);
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
-					AdvanceTokenProcessor processor = new AdvanceTokenProcessor();
-					System.out.println(processor.processToken(tokenTerm));
+					System.out.println(tokenProcessor.processToken(tokenTerm));
 				}
 				else if (query.equals(":vocab")) {
 					index.getVocabulary()
@@ -63,7 +74,7 @@ public class PositionalInvertedIndexer  {
 				} else {
 
 					List<Posting> resultList = ParseQueryNGetpostings(query,index);
-					if (resultList != null) {
+					if (resultList != null ) {
 						for (Posting p : resultList) {
 							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
 						}
@@ -71,7 +82,6 @@ public class PositionalInvertedIndexer  {
 
 						while(true)
 						{
-
 							System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
 							documentName = reader.readLine();
 							if(documentName.toLowerCase().equals("query"))
@@ -101,9 +111,7 @@ public class PositionalInvertedIndexer  {
 									continue;
 								break;
 							}
-
 						}
-
 					} else {
 						System.out.println("No such text can be found in the Corpus!");
 					}
@@ -125,22 +133,20 @@ public class PositionalInvertedIndexer  {
 
 	private static Index indexCorpus(DocumentCorpus corpus) {
 		HashSet<String> vocabulary = new HashSet<>();
-		AdvanceTokenProcessor processor = new AdvanceTokenProcessor();
 
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
 			int i=1;
-			for(String string: strings)
-			{
-				for(String term:processor.processToken(string)) {
+			for(String string: strings){
+				for(String term:tokenProcessor.processToken(string)) {
 					index.addTerm(term, document.getId(), i);
 				}
 				i++;
+				index.addToVocab(string);
 			}
-			try
-			{
+			try {
 				englishTokenStream.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -148,8 +154,6 @@ public class PositionalInvertedIndexer  {
 		}
 		return index;
 	}
-
-
 	private static void printDocument(String filePath)throws IOException{
 		BufferedReader reader=new BufferedReader(new FileReader(filePath));
 		String line;
@@ -161,7 +165,7 @@ public class PositionalInvertedIndexer  {
 
 	public static List<Posting> ParseQueryNGetpostings(String query,Index index)
 	{
-		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+		BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);
 		Query queryobject = booleanQueryParser.parseQuery(query.toLowerCase().trim());
 		List<Posting> resultList = null;
 		if (queryobject != null) {

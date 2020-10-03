@@ -1,5 +1,5 @@
 package cecs429.query;
-
+import cecs429.text.TokenProcessor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +8,12 @@ import java.util.List;
  * Does not handle phrase queries, NOT queries, NEAR queries, or wildcard queries... yet.
  */
 public class BooleanQueryParser {
+	TokenProcessor tokenProcessor;
+
+	public BooleanQueryParser(TokenProcessor tokenProcessor){
+		this.tokenProcessor = tokenProcessor;
+	}
+
 	/**
 	 * Identifies a portion of a string with a starting index and a length.
 	 */
@@ -27,12 +33,10 @@ public class BooleanQueryParser {
 	private static class Literal {
 		StringBounds bounds;
 		Query literalComponent;
-
 		
 		Literal(StringBounds bounds, Query literalComponent) {
 			this.bounds = bounds;
 			this.literalComponent = literalComponent;
-
 		}
 	}
 	
@@ -152,7 +156,6 @@ public class BooleanQueryParser {
 			++startIndex;
 
 		}
-
 		
 		// Locate the next space to find the end of this literal.
 		int nextSpace = subquery.indexOf(' ', startIndex);
@@ -255,25 +258,27 @@ public class BooleanQueryParser {
 		}
 		// This is a term literal containing a single term.
 		if(isPhraseLiteral==false) {
-
 			if(subquery.charAt(startIndex)=='-')
 			{
 				isNegativeLiteral=true;
 				startIndex++;
 				lengthOut--;
 			}
-			return new Literal(
-					new StringBounds(startIndex, lengthOut),
-
-					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut),isNegativeLiteral ));
-
-		}
-		else
-		{
+				if (subquery.substring(startIndex,startIndex+lengthOut).contains("*")){
+					return new Literal(
+							new StringBounds(startIndex,lengthOut),
+							new WildcardLiteral(subquery.substring(startIndex,startIndex+lengthOut),tokenProcessor,isNegativeLiteral)
+					);
+				}else{
+					return new Literal(
+							new StringBounds(startIndex, lengthOut),
+							new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut),tokenProcessor,isNegativeLiteral));
+				}
+		}else{
 			return new Literal(
 					new StringBounds(startIndex, lengthOut+1),
 					//string.substring(startIndex,EndIndex)--> here startIndex in inclusive and EndIndex is exclusive
-					new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut + 1),isNegativeLiteral));
+					new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut + 1),tokenProcessor,isNegativeLiteral));
 					//for PhraseLiteral getPostings, at the beginning remove the start and end quotations
 		}
 		/*
