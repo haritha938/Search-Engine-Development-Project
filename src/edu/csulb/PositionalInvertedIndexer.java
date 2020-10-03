@@ -35,7 +35,7 @@ public class PositionalInvertedIndexer  {
 			System.out.println("Please enter your search query...");
 			String query=null;
 			query=reader.readLine();
-			String documentName;
+			String documentName=null;
 			boolean found;
 			while (query.length()>0) {
 
@@ -61,13 +61,8 @@ public class PositionalInvertedIndexer  {
 							.limit(1000)
 							.forEach(System.out::println);
 				} else {
-					BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
-					Query queryobject = booleanQueryParser.parseQuery(query.toLowerCase().trim());
-					List<Posting> resultList = null;
-					if (queryobject != null) {
-						resultList = queryobject.getPostings(index);
-					}
-					//List<Posting> resultList = index.getPostings(query.toLowerCase());
+
+					List<Posting> resultList = ParseQueryNGetpostings(query,index);
 					if (resultList != null) {
 						for (Posting p : resultList) {
 							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
@@ -83,6 +78,10 @@ public class PositionalInvertedIndexer  {
 							{
 								break;
 							}
+							if(documentName.toLowerCase().equals(":q"))
+							{
+								break;
+							}
 							String filePath = path + "/" + documentName;
 							found=false;
 							for(Posting p: resultList) {
@@ -91,7 +90,7 @@ public class PositionalInvertedIndexer  {
 									found=true;
 								}
 							}
-							if(found==false) {
+							if(!found) {
 								System.out.println("Wrong document name. Enter document names from the above list !");
 							}
 							else {
@@ -108,6 +107,11 @@ public class PositionalInvertedIndexer  {
 					} else {
 						System.out.println("No such text can be found in the Corpus!");
 					}
+				}
+				if(documentName!=null)
+				{
+					if(documentName.equals(":q"))
+					break;
 				}
 				System.out.println("Please enter your search query...");
 				query=reader.readLine();
@@ -128,13 +132,15 @@ public class PositionalInvertedIndexer  {
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
 			int i=1;
-			for(String string: strings){
+			for(String string: strings)
+			{
 				for(String term:processor.processToken(string)) {
 					index.addTerm(term, document.getId(), i);
 				}
 				i++;
 			}
-			try {
+			try
+			{
 				englishTokenStream.close();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -142,6 +148,8 @@ public class PositionalInvertedIndexer  {
 		}
 		return index;
 	}
+
+
 	private static void printDocument(String filePath)throws IOException{
 		BufferedReader reader=new BufferedReader(new FileReader(filePath));
 		String line;
@@ -149,6 +157,17 @@ public class PositionalInvertedIndexer  {
 			System.out.println(line);
 		}
 
+	}
+
+	public static List<Posting> ParseQueryNGetpostings(String query,Index index)
+	{
+		BooleanQueryParser booleanQueryParser = new BooleanQueryParser();
+		Query queryobject = booleanQueryParser.parseQuery(query.toLowerCase().trim());
+		List<Posting> resultList = null;
+		if (queryobject != null) {
+			resultList = queryobject.getPostings(index);
+		}
+		return resultList;
 	}
 
 }

@@ -31,4 +31,39 @@ public class Posting {
 	public List<Integer> getPositions(){
 		return mPositionsList;
 	}
+//Dt Sep 30
+	@Override
+	public boolean equals(Object obj) {
+		boolean result=false;
+		Posting pos=(Posting)obj;
+		if(pos.getDocumentId()==this.mDocumentId)
+		{
+			List<Integer> ObjPositionList=pos.getPositions();
+			List<Integer> PositionList=this.mPositionsList;
+			if(ObjPositionList.size()==PositionList.size())
+			{
+				int n=PositionList.size();
+				int counter=0;
+
+				for(int i=0;i<n;i++)
+				{
+					if(ObjPositionList.get(i)==PositionList.get(i))
+					{ counter++;}
+					else {
+						break;
+					}
+				}
+				if(n==counter)
+					result=true;
+			}
+		}
+		return result;
+		//return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return this.mDocumentId ;
+		//return super.hashCode();
+	}
 }

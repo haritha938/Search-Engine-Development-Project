@@ -14,18 +14,21 @@ import java.util.List;
 public class PhraseLiteral implements Query {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
+	private boolean isNegativeLiteral;
 	
 	/**
 	 * Constructs a PhraseLiteral with the given individual phrase terms.
 	 */
 	public PhraseLiteral(List<String> terms) {
 		mTerms.addAll(terms);
+
 	}
 	
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms separated by spaces.
 	 */
-	public PhraseLiteral(String terms) {
+	public PhraseLiteral(String terms,boolean isNegativeLiteral) {
+		this.isNegativeLiteral=isNegativeLiteral;
 		//hn
 		int size=terms.length();
 		terms=terms.substring(terms.indexOf("\"")< size-1? terms.indexOf("\"")+1:0,size-1);
@@ -82,6 +85,11 @@ public class PhraseLiteral implements Query {
 		}
 
 		return postingListResult;
+	}
+
+	@Override
+	public boolean IsNegativeQuery() {
+		return isNegativeLiteral;
 	}
 
 	public List<Posting> PositionalMerge(List<Posting> Postings_one, List<Posting> Postings_two, int distance)

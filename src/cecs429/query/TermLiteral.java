@@ -12,8 +12,10 @@ import cecs429.text.Stemmer;
  */
 public class TermLiteral implements Query {
 	private String mTerm;
+	private boolean isNegativeLiteral;
 	
-	public TermLiteral(String term) {
+	public TermLiteral(String term, boolean isNegativeLiteral) {
+		this.isNegativeLiteral=isNegativeLiteral;
 
 		StringBuilder builder = new StringBuilder(term.trim());
 		int i=0;
@@ -51,7 +53,12 @@ public class TermLiteral implements Query {
 	public List<Posting> getPostings(Index index) {
 		return index.getPostings(mTerm);
 	}
-	
+
+	@Override
+	public boolean IsNegativeQuery() {
+		return isNegativeLiteral;
+	}
+
 	@Override
 	public String toString() {
 		return mTerm;

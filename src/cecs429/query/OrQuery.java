@@ -2,7 +2,6 @@ package cecs429.query;
 
 import cecs429.index.Index;
 import cecs429.index.Posting;
-import com.sun.source.tree.WhileLoopTree;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,49 +35,31 @@ public class OrQuery implements Query {
 		else
 		{
 
-			ArrayList<List<Posting>> OrMergeInputs=new ArrayList<>();
 			List<Posting> postings=null;
-			for(int i=0;i<ChildernCount;i++)
+			List<Posting> ResultantPostings=null;
+			ResultantPostings=mChildren.get(0).getPostings(index);
+			for(int i=1;i<ChildernCount;i++)
 			{
 				postings=mChildren.get(i).getPostings(index);
 				if(postings!=null)
-				{OrMergeInputs.add(postings);}
+				{
+					ResultantPostings=OrMerge(ResultantPostings,postings);
+				}
 
 			}
+			result=ResultantPostings;
 
-			while (OrMergeInputs.size()>1)
-			{
-				OrMergeInputs=Merge(OrMergeInputs);
-
-			}
-			if(OrMergeInputs.size()>0)
-				result=OrMergeInputs.get(0);
 		}
 
 		return result;
 	}
 
-	public ArrayList<List<Posting>> Merge(List<List<Posting>> Inputs)
-	{
-		int k=0;
-
-		ArrayList<List<Posting>> RemainingOrMergeInputs=new ArrayList<>();
-		int ChildernCount=Inputs.size();
-		while (k < ChildernCount - 1) {
-
-			List<Posting> A = Inputs.get(k);
-			List<Posting> B = Inputs.get(k+1);
-
-			RemainingOrMergeInputs.add(OrMerge(A,B));
-			k = k + 2;
-			if(k==ChildernCount-1)
-			{
-				RemainingOrMergeInputs.add(Inputs.get(k));
-			}
-
-		}
-		return RemainingOrMergeInputs;
+	@Override
+	public boolean IsNegativeQuery() {
+		return false;
 	}
+
+
 	public List<Posting> OrMerge(List<Posting> A,List<Posting> B)
 	{
 		List<Posting> OrMergeResult = new ArrayList<>();
@@ -107,16 +88,16 @@ public class OrQuery implements Query {
 
 		}
 
-		if (i == A_size) {
+
 			while (j < B_size) {
 				OrMergeResult.add(B.get(j));
 				j++;
 			}
-		} else {
+
 			while (i < A_size) {
 				OrMergeResult.add(A.get(i));
 				i++;
-			}
+
 		}
 		return OrMergeResult;
 	}

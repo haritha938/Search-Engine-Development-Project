@@ -27,10 +27,12 @@ public class BooleanQueryParser {
 	private static class Literal {
 		StringBounds bounds;
 		Query literalComponent;
+
 		
 		Literal(StringBounds bounds, Query literalComponent) {
 			this.bounds = bounds;
 			this.literalComponent = literalComponent;
+
 		}
 	}
 	
@@ -142,6 +144,7 @@ public class BooleanQueryParser {
 	private Literal findNextLiteral(String subquery, int startIndex) {
 		int subLength = subquery.length();
 		boolean isPhraseLiteral=false;
+		boolean isNegativeLiteral=false;
 		int lengthOut=0;
 		
 		// Skip past white space.
@@ -149,19 +152,21 @@ public class BooleanQueryParser {
 			++startIndex;
 
 		}
+
 		
 		// Locate the next space to find the end of this literal.
 		int nextSpace = subquery.indexOf(' ', startIndex);
 		// Locate the next doublequotes to find the end of this literal.
 		int DquoteStartIndex = subquery.indexOf('"', startIndex);
 		if (nextSpace < 0 && DquoteStartIndex<0) {
-			// No more literals in this subquery.
+			// No more literals in this subquery. The subquery is the literal.
+
 			lengthOut = subLength - startIndex;
 		}
-		else if (nextSpace > 0 && DquoteStartIndex<0){
+		else if (nextSpace >= 0 && DquoteStartIndex<0){
 			lengthOut = nextSpace - startIndex;
 		}
-		else if (nextSpace < 0 && DquoteStartIndex >0)
+		else if (nextSpace < 0 && DquoteStartIndex >=0)
 		{
 			int DquoteEndIndex=subquery.indexOf('"', DquoteStartIndex+1);
 			if(DquoteEndIndex<0)
@@ -169,12 +174,36 @@ public class BooleanQueryParser {
 				//Check with professor if the query is like -> what is binomial expansion of "1 + x" to the power n.
 				//then our main subquery will be-> 'what is binomial expansion of "1 '
 				//more specifically in this block the subquery will be '"1 '
+				if(subquery.charAt(startIndex) == '"') {
+					//discard the startDdoubleQuotes as we can't find its ending pair. Also, there is no space. So this is just a signle word/term.
+					//Example:"1-> becomes 1
+					startIndex++;
+					lengthOut = subquery.length() - startIndex;
+					isPhraseLiteral = false;
+				}
+				else
+				{
+					//if query like this-> xy"cc, then we send the subquery as xy..so that on next method call, we parse "cc
+					lengthOut=DquoteStartIndex-startIndex;
+					isPhraseLiteral=false;
+				}
+
 			}
 			else {
-				//Assuming the user never gives a query like-> xy"cc cs" . And always gives the same query like this-> xy "cc cs"
+				//Assuming the user never gives a query like-> xy"cccs" . And always gives the same query like this-> xy "cccs"
 				//hence here always DquoteStartIndex will be equal to startIndex i.e., DquoteStartIndex==startIndex
-				lengthOut=DquoteEndIndex-startIndex;
-				isPhraseLiteral=true;
+				if(subquery.charAt(startIndex) == '"') {
+					//if query like this-> xy "cccs"
+					lengthOut = DquoteEndIndex - startIndex;
+					isPhraseLiteral = true;
+				}
+				else
+				{
+					//if query like this-> xy"cccs", then we send the subquery as xy..so that on next method call, we parse "cccs"
+					lengthOut=DquoteStartIndex-startIndex;
+					isPhraseLiteral=false;
+				}
+
 			}
 		}
 		else //nextSpace > 0 && DquoteStartIndex >0
@@ -184,16 +213,39 @@ public class BooleanQueryParser {
 				int DquoteEndIndex=subquery.indexOf('"', DquoteStartIndex+1);
 				if(DquoteEndIndex<0)
 				{
-					//Check with professor if the query is like -> what is binomial expansion of "1 + x" to the power n.
-					//then our main subquery will be-> 'what is binomial expansion of "1 '
-					//more specifically in this block the subquery will be '"1 '
+					// call me " to this no."
+					//Check with professor if the query is like -> what is binomial expansion of "(y z) + x" to the power n.
+					//then our main subquery will be-> 'what is binomial expansion of '"(y z) '
+					//more specifically in this block the subquery will be '"(y z) '
+					if(subquery.charAt(startIndex) == '"') {
+						//if query like this-> "(y z)
+						startIndex++;
+						lengthOut = subquery.indexOf(" ",startIndex) - startIndex;
+						isPhraseLiteral = false;
+					}
+					else
+					{
+						//if query like this-> xy"(y z) + x",
+						// More specifically xy"(y z)  then we send the subquery as xy..so that on next method call, we parse "(y z)
+						lengthOut=DquoteStartIndex-startIndex;
+						isPhraseLiteral=false;
+					}
 				}
 				else {
 					//Assuming the user never gives a query like-> xy"cc cs" . And always gives the same query like this-> xy "cc cs".
 					// In this case the subquery will be like->"cc cs" , as DquoteStartIndex < nextSpace
 					//hence here always DquoteStartIndex will be equal to startIndex i.e., DquoteStartIndex==startIndex
-					lengthOut=DquoteEndIndex-startIndex;
-					isPhraseLiteral=true;
+					if(subquery.charAt(startIndex) == '"') {
+						//if query like this-> xy "cc cs"
+						lengthOut = DquoteEndIndex - startIndex;
+						isPhraseLiteral = true;
+					}
+					else
+					{
+						//if query like this-> xy"cc cs", then we send the subquery as xy..so that on next method call, we parse "cc cs"
+						lengthOut=DquoteStartIndex-startIndex;
+						isPhraseLiteral=false;
+					}
 				}
 			}
 			else
@@ -203,10 +255,17 @@ public class BooleanQueryParser {
 		}
 		// This is a term literal containing a single term.
 		if(isPhraseLiteral==false) {
+
+			if(subquery.charAt(startIndex)=='-')
+			{
+				isNegativeLiteral=true;
+				startIndex++;
+				lengthOut--;
+			}
 			return new Literal(
 					new StringBounds(startIndex, lengthOut),
 
-					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut)) );
+					new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut),isNegativeLiteral ));
 
 		}
 		else
@@ -214,11 +273,11 @@ public class BooleanQueryParser {
 			return new Literal(
 					new StringBounds(startIndex, lengthOut+1),
 					//string.substring(startIndex,EndIndex)--> here startIndex in inclusive and EndIndex is exclusive
-					new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut + 1)));
+					new PhraseLiteral(subquery.substring(startIndex, startIndex + lengthOut + 1),isNegativeLiteral));
 					//for PhraseLiteral getPostings, at the beginning remove the start and end quotations
 		}
 		/*
-		TODO:
+
 		Instead of assuming that we only have single-term literals, modify this method so it will create a PhraseLiteral
 		object if the first non-space character you find is a double-quote ("). In this case, the literal is not ended
 		by the next space character, but by the next double-quote character.

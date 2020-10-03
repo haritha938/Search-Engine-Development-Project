@@ -12,4 +12,5 @@ public interface Query {
      * Retrieves a list of postings for the query, using an Index as the source.
      */
     List<Posting> getPostings(Index index);
+    boolean IsNegativeQuery();
 }

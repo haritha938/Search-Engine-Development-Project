@@ -48,4 +48,5 @@ public class PositionalInvertedIndex implements Index {
         Collections.sort(mVocabulary);
         return Collections.unmodifiableList(mVocabulary);
     }
+
 }
