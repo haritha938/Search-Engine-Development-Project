@@ -31,14 +31,19 @@ public class PositionalInvertedIndexer  {
 			System.out.println("Enter your preferred token processor's serial from below options");
 			System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
 			System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
-			int tokenizationInput = Integer.parseInt(reader.readLine());
-			switch (tokenizationInput){
-				case 1:
-					tokenProcessor = new BasicTokenProcessor();
-					break;
-				case 2:
-					tokenProcessor = new AdvanceTokenProcessor();
-					break;
+			loop:while(true) {
+				int tokenizationInput = Integer.parseInt(reader.readLine());
+				switch (tokenizationInput) {
+					case 1:
+						tokenProcessor = new BasicTokenProcessor();
+						break loop;
+					case 2:
+						tokenProcessor = new AdvanceTokenProcessor();
+						break loop;
+					default:
+						System.out.println("Please enter a valid input");
+						break;
+				}
 			}
 			System.out.println("Please enter your desired search directory...");
 			Path path = Paths.get(reader.readLine());
@@ -74,10 +79,9 @@ public class PositionalInvertedIndexer  {
 							.stream()
 							.limit(1000)
 							.forEach(System.out::println);
-				} else {
-
+				}else{
 					List<Posting> resultList = ParseQueryNGetpostings(query,index,tokenProcessor);
-					if (resultList != null ) {
+					if (resultList != null && resultList.size()!=0) {
 						for (Posting p : resultList) {
 							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
 						}
@@ -157,6 +161,7 @@ public class PositionalInvertedIndexer  {
 		}
 		return index;
 	}
+
 	private static void printDocument(String filePath)throws IOException{
 		BufferedReader reader=new BufferedReader(new FileReader(filePath));
 		String line;
@@ -176,7 +181,6 @@ public class PositionalInvertedIndexer  {
 		}
 		return resultList;
 	}
-
 }
 
 

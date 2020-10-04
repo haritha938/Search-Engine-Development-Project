@@ -53,10 +53,19 @@ public class WildcardLiteral implements Query {
          * kGramResult will have the valid strings that are fetched
          * from k-gram
          */
-        List<String> kGramResult = new ArrayList<>(kGramIndex.get(kGramSearchTerm.get(0)));
-//        kGramIndex.remove(kGramSearchTerm.get(0));
-//        kGramSearchTerm.remove(0);
-        for(String string:kGramSearchTerm){
+        int search;
+        List<String> kGramResult=null;
+        for(search=0;search<kGramSearchTerm.size();search++) {
+            if(kGramIndex.containsKey(kGramSearchTerm.get(search))) {
+                kGramResult = new ArrayList<>(kGramIndex.get(kGramSearchTerm.get(search)));
+                break;
+            }
+        }
+        if(search==kGramSearchTerm.size()){
+            return new ArrayList<String>();
+        }
+        for(;search<kGramSearchTerm.size();search++){
+            String string = kGramSearchTerm.get(search);
             int i=0;
             int j=0;
             List<String> temp = new ArrayList<>();
@@ -75,6 +84,8 @@ public class WildcardLiteral implements Query {
             kGramResult.clear();
             kGramResult.addAll(temp);
         }
+        if(kGramResult==null || kGramResult.size()==0)
+            return new ArrayList<String>();
         List<String> postFitering = new ArrayList<>(kGramResult);
         if(kGramSearchTerm.size()==1){
             if(queryTerm.indexOf("*")==0) {
