@@ -3,11 +3,11 @@ package cecs429.query;
 import cecs429.index.Index;
 import cecs429.index.Posting;
 
+import cecs429.text.TokenProcessor;
+
 import java.util.List;
 
-import cecs429.text.AdvanceTokenProcessor;
-import cecs429.text.Stemmer;
-import cecs429.text.TokenProcessor;
+
 
 /**
  * A TermLiteral represents a single term in a subquery.
@@ -38,6 +38,10 @@ public class TermLiteral implements Query {
 
 	@Override
 	public String toString() {
+		return mTerm;
+	}
+
+	public String getmTerm() {
 		return mTerm;
 	}
 }

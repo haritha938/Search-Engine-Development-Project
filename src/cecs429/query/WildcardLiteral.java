@@ -60,7 +60,7 @@ public class WildcardLiteral implements Query {
             int i=0;
             int j=0;
             List<String> temp = new ArrayList<>();
-            while(i<kGramResult.size() && j<kGramIndex.get(string).size()){
+            while(i<kGramResult.size() && kGramIndex.containsKey(string) && j<kGramIndex.get(string).size()){
                 int compare =kGramResult.get(i).compareTo(kGramIndex.get(string).get(j));
                 if(compare<0){
                     i++;
@@ -118,8 +118,16 @@ public class WildcardLiteral implements Query {
     public List<Posting> getPostings(Index index) {
 
         List<Query> queries = new ArrayList<>();
+        TermLiteral previousTermLiteral=null;
         for(String term:getPossibleStrings(index)){
-            queries.add(new TermLiteral(term,tokenProcessor,isNegativeLiteral));
+            TermLiteral termLiteral = new TermLiteral(term,tokenProcessor,isNegativeLiteral);
+            /*  Checking if termLiteral is same as previously added termLiteral as ques* generate - questions. || questions, || question
+                after stemming all of them become question. So, we are pruning remaining list for faster search results
+             */
+            if(queries.size()==0 || !previousTermLiteral.getmTerm().equals(termLiteral.getmTerm())) {
+                queries.add(termLiteral);
+                previousTermLiteral = termLiteral;
+            }
         }
         return new OrQuery(queries).getPostings(index);
     }

@@ -14,6 +14,7 @@ import java.util.List;
 public class PhraseLiteral implements Query {
 	// The list of individual terms in the phrase.
 	private List<String> mTerms = new ArrayList<>();
+	String tokens;
 	TokenProcessor tokenProcessor;
 	private boolean isNegativeLiteral;
 
@@ -30,32 +31,30 @@ public class PhraseLiteral implements Query {
 	public PhraseLiteral(String terms, TokenProcessor tokenProcessor,boolean isNegativeLiteral) {
         this.isNegativeLiteral=isNegativeLiteral;
 		int size=terms.length();
-		terms=terms.substring(terms.indexOf("\"")< size-1? terms.indexOf("\"")+1:0,size-1);
+		this.tokens=terms.substring(terms.indexOf("\"")< size-1? terms.indexOf("\"")+1:0,size-1);
+		this.tokenProcessor = tokenProcessor;
 		System.out.println("Phrase Literal terms:"+terms);
-		for(String term: terms.split(" ")) {
-			mTerms.add(tokenProcessor.processToken(term).get(0));
-		}
-
 	}
-	
+
 	@Override
 	public List<Posting> getPostings(Index index) {
 		// TODO: program this method. Retrieve the postings for the individual terms in the phrase,
 		// and positional merge them together.
-		List<Posting> postingListResult=index.getPostings(mTerms.get(0));
+		String[] mTerms = tokens.split(" +");
+		List<Posting> postingListResult
+				= mTerms[0].contains("*")
+				? new WildcardLiteral(mTerms[0], tokenProcessor,isNegativeLiteral).getPostings(index)
+				: index.getPostings(tokenProcessor.processToken(mTerms[0]).get(0));
 		List<Posting> postingListInput=null;
-		int distanceBetweenTerms=0;
-		for(int i=1;i<mTerms.size();i++)
-		{
-			postingListInput=index.getPostings(mTerms.get(i));
+		int distanceBetweenTerms = 0;
+		for (int i = 1; i < mTerms.length; i++) {
+			postingListInput = mTerms[i].contains("*") ? new WildcardLiteral(mTerms[i], tokenProcessor,isNegativeLiteral).getPostings(index) : index.getPostings(tokenProcessor.processToken(mTerms[i]).get(0));
 			postingListResult=PositionalMerge(postingListResult,postingListInput,++distanceBetweenTerms);
-			if(postingListResult==null)
-			{
+
+			if (postingListResult == null) {
 				return null;
 			}
-
 		}
-
 		return postingListResult;
 	}
 
