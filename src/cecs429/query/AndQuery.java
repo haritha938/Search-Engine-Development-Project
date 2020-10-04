@@ -96,10 +96,10 @@ public class AndQuery implements Query {
 		else {
 			int i = 0, j = 0;
 			List<Posting> NegativeTermpostings=NotQuery.get(index).getPostings(CorpusIndex);
-			int NotTerm_posting_size=NegativeTermpostings.size();
-			int Result_posting_size=PosTermPosting.size();
+			int notTermPostingSize=NegativeTermpostings.size();
+			int resultPostingSize=PosTermPosting.size();
 			List<Posting> Result=new ArrayList<>();
-			while (i<Result_posting_size && j<NotTerm_posting_size)
+			while (i<resultPostingSize && j<notTermPostingSize)
 			{
 				if(NegativeTermpostings.get(j).getDocumentId()==PosTermPosting.get(i).getDocumentId())
 				{
@@ -117,7 +117,7 @@ public class AndQuery implements Query {
 					j++;
 				}
 			}
-			while(i<Result_posting_size)
+			while(i<resultPostingSize)
 			{
 				Result.add(PosTermPosting.get(i));
 				i++;
@@ -131,22 +131,22 @@ public class AndQuery implements Query {
 	public List<Posting> AndMerge(List<Posting> A,List<Posting> B)
 	{
 		List<Posting> AndMergeResult = new ArrayList<>();
-		int A_docId = 0, B_docId = 0;
-		int A_size = A.size();
-		int B_size = B.size();
+		int aDocId = 0, bDocId = 0;
+		int aSize = A.size();
+		int bSize = B.size();
 		int i = 0, j = 0;
-		while (i < A_size && j < B_size) {
+		while (i < aSize && j < bSize) {
 
-			A_docId = A.get(i).getDocumentId();
-			B_docId = B.get(j).getDocumentId();
+			aDocId = A.get(i).getDocumentId();
+			bDocId = B.get(j).getDocumentId();
 
-			if (A_docId == B_docId) {
+			if (aDocId == bDocId) {
 				AndMergeResult.add(A.get(i));
 				i++;
 				j++;
-			} else if (A_docId < B_docId) {
+			} else if (aDocId < bDocId) {
 				i++;
-			} else //A_docId > B_docId
+			} else //aDocId > bDocId
 			{
 				j++;
 			}

@@ -28,4 +28,9 @@ public interface Index {
 	 * to generate k-grams
 	 */
 	void generateKGrams(int kGramSize);
+	/**
+	 * Retrieves the InvertedIndex
+	 */
+	Map<String,List<Posting>> getIndex();
+
 }

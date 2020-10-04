@@ -64,20 +64,20 @@ public class PhraseLiteral implements Query {
 		return isNegativeLiteral;
 	}
 
-	public List<Posting> PositionalMerge(List<Posting> Postings_one, List<Posting> Postings_two, int distance)
+	public List<Posting> PositionalMerge(List<Posting> postingsOne, List<Posting> postingsTwo, int distance)
 	{
-		int i=0,j=0,Posting_one_docId=0,Posting_two_docId=0;
-		int Posting_one_size=Postings_one.size();
-		int Posting_two_size=Postings_two.size();
+		int i=0,j=0,postingOneDocId=0,postingTwoDocId=0;
+		int postingOneSize=postingsOne.size();
+		int postingTwoSize=postingsTwo.size();
 		List<Posting> Result=null;
 
-		while (i < Posting_one_size && j< Posting_two_size)
+		while (i < postingOneSize && j< postingTwoSize)
 		{
-			Posting_one_docId=Postings_one.get(i).getDocumentId();
-			Posting_two_docId=Postings_two.get(j).getDocumentId();
-			if(Posting_one_docId==Posting_two_docId)
+			postingOneDocId=postingsOne.get(i).getDocumentId();
+			postingTwoDocId=postingsTwo.get(j).getDocumentId();
+			if(postingOneDocId==postingTwoDocId)
 			{
-				Posting mergedPosting=Merge(Postings_one.get(i).getPositions(),Postings_two.get(j).getPositions(),Posting_one_docId,distance);
+				Posting mergedPosting=Merge(postingsOne.get(i).getPositions(),postingsTwo.get(j).getPositions(),postingOneDocId,distance);
 				if(mergedPosting!=null)
 				{
 					if (Result == null)
@@ -89,11 +89,11 @@ public class PhraseLiteral implements Query {
 				i++;
 				j++;
 			}
-			else if(Posting_one_docId < Posting_two_docId)
+			else if(postingOneDocId < postingTwoDocId)
 			{
 				i++;
 			}
-			else //Posting_one_docId > Posting_two_docId
+			else //postingOneDocId > postingTwoDocId
 			{
 				j++;
 			}
@@ -102,37 +102,37 @@ public class PhraseLiteral implements Query {
 		return Result;
 	}
 
-	public Posting Merge(List<Integer> positionList_one,List<Integer> positionList_two,int documentId, int distance)
+	public Posting Merge(List<Integer> positionListOne,List<Integer> positionListTwo,int documentId, int distance)
 	{
 
 		int i=0,j=0;
-		int ListOne_size=positionList_one.size(),ListTwo_size=positionList_two.size();
+		int listOneSize=positionListOne.size(),listTwoSize=positionListTwo.size();
 		Posting resultantPosting=null;
 
 
-		while(i<ListOne_size && j< ListTwo_size)
+		while(i<listOneSize && j< listTwoSize)
 		{
-			int postionOf_doc1=positionList_one.get(i);
-			int postionOf_doc2=positionList_two.get(j);
-					//postionOf_doc1+ distance;
-			if(postionOf_doc2== postionOf_doc1+ distance)
+			int postionOfDoc1=positionListOne.get(i);
+			int postionOfDoc2=positionListTwo.get(j);
+					//postionOfDoc1+ distance;
+			if(postionOfDoc2== postionOfDoc1+ distance)
 			{
 				if(resultantPosting==null)
 				{
-					resultantPosting=new Posting(documentId,postionOf_doc1);
+					resultantPosting=new Posting(documentId,postionOfDoc1);
 				}
 				else
 				{
-					resultantPosting.addPositionToExistingTerm(postionOf_doc1);
+					resultantPosting.addPositionToExistingTerm(postionOfDoc1);
 				}
 				i++;
 				j++;
 			}
-			else if(postionOf_doc2 > postionOf_doc1+ distance)
+			else if(postionOfDoc2 > postionOfDoc1+ distance)
 			{
 				i++;
 			}
-			else //postionOf_doc2 < postionOf_doc1+ distance
+			else //postionOfDoc2 < postionOfDoc1+ distance
 			{
 				j++;
 			}

@@ -27,7 +27,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="com.google.code.gson:gson:2.8.6" level="project" />
+    <orderEntry type="library" exported="" name="com.google.code.gson:gson:2.8.6" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="JUnit4">
         <CLASSES>
@@ -38,5 +38,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="gson-2.8.6 (2)" level="project" />
   </component>
 </module>

@@ -46,14 +46,7 @@ public class AdvanceTokenProcessor implements TokenProcessor {
     }
 
 
-    String stemProcess(String token) throws Throwable{
-       /* Stemmer s=new Stemmer();
-        char[] n=token.toCharArray();
-        s.add(n,n.length);
-        s.stem();
-        String u=s.toString();
-        return u;
-        */
+    public String stemProcess(String token) throws Throwable{
         Class stemClass = Class.forName("org.tartarus.snowball.ext.englishStemmer");
         SnowballStemmer stemmer = (SnowballStemmer) stemClass.newInstance();
         stemmer.setCurrent(token);

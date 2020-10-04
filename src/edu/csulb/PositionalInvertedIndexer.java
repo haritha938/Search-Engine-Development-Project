@@ -22,6 +22,7 @@ import java.util.List;
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
 
+
 	public static void main(String[] args) {
 
 		BufferedReader reader =
@@ -43,12 +44,14 @@ public class PositionalInvertedIndexer  {
 			Path path = Paths.get(reader.readLine());
 			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 			long startTime=System.nanoTime();
-			Index index = indexCorpus(corpus);
+			Index index = indexCorpus(corpus,tokenProcessor);
+
 			index.generateKGrams(3);
 			long endTime=System.nanoTime();
 			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
 			//TODO: A full query parser; for now, we'll only support single-term queries.
 			System.out.println("Please enter your search query...");
+
 			String query=null;
 			query=reader.readLine();
 			String documentName=null;
@@ -59,7 +62,7 @@ public class PositionalInvertedIndexer  {
 				} else if (query.startsWith(":index")) {
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
-					index = indexCorpus(corpus);
+					index = indexCorpus(corpus, tokenProcessor);
 					index.generateKGrams(3);
 				}
 				else if(query.startsWith(":stem")){
@@ -73,7 +76,7 @@ public class PositionalInvertedIndexer  {
 							.forEach(System.out::println);
 				} else {
 
-					List<Posting> resultList = ParseQueryNGetpostings(query,index);
+					List<Posting> resultList = ParseQueryNGetpostings(query,index,tokenProcessor);
 					if (resultList != null ) {
 						for (Posting p : resultList) {
 							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
@@ -84,11 +87,11 @@ public class PositionalInvertedIndexer  {
 						{
 							System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
 							documentName = reader.readLine();
-							if(documentName.toLowerCase().equals("query"))
+							if(documentName.equalsIgnoreCase("query"))
 							{
 								break;
 							}
-							if(documentName.toLowerCase().equals(":q"))
+							if(documentName.equalsIgnoreCase(":q"))
 							{
 								break;
 							}
@@ -131,7 +134,7 @@ public class PositionalInvertedIndexer  {
 		}
 	}
 
-	private static Index indexCorpus(DocumentCorpus corpus) {
+	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
 		HashSet<String> vocabulary = new HashSet<>();
 
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
@@ -163,10 +166,10 @@ public class PositionalInvertedIndexer  {
 
 	}
 
-	public static List<Posting> ParseQueryNGetpostings(String query,Index index)
+	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
 	{
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);
-		Query queryobject = booleanQueryParser.parseQuery(query.toLowerCase().trim());
+		Query queryobject = booleanQueryParser.parseQuery(query.trim());
 		List<Posting> resultList = null;
 		if (queryobject != null) {
 			resultList = queryobject.getPostings(index);

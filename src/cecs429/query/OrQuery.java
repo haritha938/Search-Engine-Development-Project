@@ -28,29 +28,25 @@ public class OrQuery implements Query {
 		// TODO: program the merge for an OrQuery, by gathering the postings of the composed Query children and
 		// unioning the resulting postings.
 		int ChildernCount=mChildren.size();
-		if(ChildernCount==1)
-		{
-			result= mChildren.get(0).getPostings(index);
-		}
-		else
-		{
+		if(ChildernCount>0) {
+			if (ChildernCount == 1) {
+				result = mChildren.get(0).getPostings(index);
+			} else {
 
-			List<Posting> postings=null;
-			List<Posting> ResultantPostings=null;
-			ResultantPostings=mChildren.get(0).getPostings(index);
-			for(int i=1;i<ChildernCount;i++)
-			{
-				postings=mChildren.get(i).getPostings(index);
-				if(postings!=null)
-				{
-					ResultantPostings=OrMerge(ResultantPostings,postings);
+				List<Posting> postings = null;
+				List<Posting> ResultantPostings = null;
+				ResultantPostings = mChildren.get(0).getPostings(index);
+				for (int i = 1; i < ChildernCount; i++) {
+					postings = mChildren.get(i).getPostings(index);
+					if (postings != null) {
+						ResultantPostings = OrMerge(ResultantPostings, postings);
+					}
+
 				}
+				result = ResultantPostings;
 
 			}
-			result=ResultantPostings;
-
 		}
-
 		return result;
 	}
 
@@ -63,23 +59,23 @@ public class OrQuery implements Query {
 	public List<Posting> OrMerge(List<Posting> A,List<Posting> B)
 	{
 		List<Posting> OrMergeResult = new ArrayList<>();
-		int A_docId = 0, B_docId = 0;
-		int A_size = A.size();
-		int B_size = B.size();
+		int aDocId = 0, bDocId = 0;
+		int aSize = A.size();
+		int bSize = B.size();
 		int i = 0, j = 0;
-		while (i < A_size && j < B_size) {
+		while (i < aSize && j < bSize) {
 
-			A_docId = A.get(i).getDocumentId();
-			B_docId = B.get(j).getDocumentId();
+			aDocId = A.get(i).getDocumentId();
+			bDocId = B.get(j).getDocumentId();
 
-			if (A_docId == B_docId) {
+			if (aDocId == bDocId) {
 				OrMergeResult.add(A.get(i));
 				i++;
 				j++;
-			} else if (A_docId < B_docId) {
+			} else if (aDocId < bDocId) {
 				OrMergeResult.add(A.get(i));
 				i++;
-			} else //A_docId > B_docId
+			} else //aDocId > bDocId
 			{
 				OrMergeResult.add(B.get(j));
 				j++;
@@ -89,12 +85,12 @@ public class OrQuery implements Query {
 		}
 
 
-			while (j < B_size) {
+			while (j < bSize) {
 				OrMergeResult.add(B.get(j));
 				j++;
 			}
 
-			while (i < A_size) {
+			while (i < aSize) {
 				OrMergeResult.add(A.get(i));
 				i++;
 

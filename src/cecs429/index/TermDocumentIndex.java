@@ -65,4 +65,9 @@ public class TermDocumentIndex implements Index {
 	public void generateKGrams(int kGramSize) {
 
 	}
+
+	@Override
+	public Map<String, List<Posting>> getIndex() {
+		return null;
+	}
 }
