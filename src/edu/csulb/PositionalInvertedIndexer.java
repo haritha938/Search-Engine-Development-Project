@@ -33,12 +33,12 @@ public class PositionalInvertedIndexer  {
 			System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
 			System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
 			loop:while(true) {
-				int tokenizationInput = Integer.parseInt(reader.readLine());
+				String tokenizationInput = reader.readLine();
 				switch (tokenizationInput) {
-					case 1:
+					case "1":
 						tokenProcessor = new BasicTokenProcessor();
 						break loop;
-					case 2:
+					case "2":
 						tokenProcessor = new AdvanceTokenProcessor();
 						break loop;
 					default:
@@ -55,7 +55,6 @@ public class PositionalInvertedIndexer  {
 			index.generateKGrams(3);
 			long endTime=System.nanoTime();
 			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
-			//TODO: A full query parser; for now, we'll only support single-term queries.
 			System.out.println("Please enter your search query...");
 
 			String query=null;
@@ -66,6 +65,23 @@ public class PositionalInvertedIndexer  {
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
+					System.out.println("Enter your preferred token processor's serial from below options");
+					System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
+					System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
+					loop:while(true) {
+						int tokenizationInput = Integer.parseInt(reader.readLine());
+						switch (tokenizationInput) {
+							case 1:
+								tokenProcessor = new BasicTokenProcessor();
+								break loop;
+							case 2:
+								tokenProcessor = new AdvanceTokenProcessor();
+								break loop;
+							default:
+								System.out.println("Please enter a valid input");
+								break;
+						}
+					}
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 					index = indexCorpus(corpus, tokenProcessor);
