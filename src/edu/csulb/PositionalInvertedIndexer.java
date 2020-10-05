@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
@@ -151,7 +152,7 @@ public class PositionalInvertedIndexer  {
 					index.addTerm(term, document.getId(), i);
 				}
 				i++;
-				index.addToVocab(string);
+				index.addToVocab(string.toLowerCase(Locale.ENGLISH));
 			}
 			try {
 				englishTokenStream.close();
