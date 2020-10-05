@@ -3,9 +3,11 @@ package edu.csulb;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
+import cecs429.documents.JsonFileDocument;
 import cecs429.index.Index;
 import cecs429.index.PositionalInvertedIndex;
 import cecs429.index.Posting;
+import cecs429.index.SoundexIndex;
 import cecs429.query.BooleanQueryParser;
 import cecs429.query.Query;
 import cecs429.text.AdvanceTokenProcessor;
@@ -21,6 +23,7 @@ import java.util.List;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
+	static SoundexIndex soundexindex;
 	public static void main(String[] args) {
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
@@ -71,7 +74,20 @@ public class PositionalInvertedIndexer  {
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
 					System.out.println(tokenProcessor.processToken(tokenTerm));
 				}
-
+				else if(query.startsWith(":author")){
+					String tokenTerm=query.substring(query.indexOf(' ')+1);
+					//AdvanceTokenProcessor a=new AdvanceTokenProcessor();
+					List<Posting> resultPostings=soundexindex.getPostings(tokenProcessor.processToken(tokenTerm).get(0));
+					//System.out.println(resultPostings.size());
+					if(resultPostings!=null){
+						for(Posting p: resultPostings){
+							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
+						}
+					}
+					else{
+						System.out.println("No postings found !");
+					}
+				}
 				else if (query.equals(":vocab")) {
 					index.getVocabulary()
 							.stream()
@@ -138,8 +154,9 @@ public class PositionalInvertedIndexer  {
 
 	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
 		HashSet<String> vocabulary = new HashSet<>();
+		soundexindex=new SoundexIndex();
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
-
+		JsonFileDocument file;
 
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
@@ -157,6 +174,23 @@ public class PositionalInvertedIndexer  {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			EnglishTokenStream authorTokenStream;
+			Iterable<String> authorStrings;
+			if(document.hasAuthor()) {
+				file = (JsonFileDocument) document;
+				authorTokenStream=new EnglishTokenStream(file.getAuthor());
+				authorStrings=authorTokenStream.getTokens();
+				for(String str: authorStrings){
+					for(String authorTerm: tokenProcessor.processToken(str)){
+						System.out.println(authorTerm+" "+document.getId());
+						if(authorTerm.equals("")==false){
+							soundexindex.addTerm(authorTerm,file.getId());
+						}
+
+					}
+				}
+			}
+
 
 		}
 		return index;
