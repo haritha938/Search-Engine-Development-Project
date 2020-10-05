@@ -21,10 +21,7 @@ import java.util.List;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
-
-
 	public static void main(String[] args) {
-
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
 		try {
@@ -74,6 +71,7 @@ public class PositionalInvertedIndexer  {
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
 					System.out.println(tokenProcessor.processToken(tokenTerm));
 				}
+
 				else if (query.equals(":vocab")) {
 					index.getVocabulary()
 							.stream()
@@ -140,8 +138,9 @@ public class PositionalInvertedIndexer  {
 
 	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
 		HashSet<String> vocabulary = new HashSet<>();
-
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
+
+
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
@@ -158,10 +157,10 @@ public class PositionalInvertedIndexer  {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+
 		}
 		return index;
 	}
-
 	private static void printDocument(String filePath)throws IOException{
 		BufferedReader reader=new BufferedReader(new FileReader(filePath));
 		String line;
@@ -170,7 +169,6 @@ public class PositionalInvertedIndexer  {
 		}
 
 	}
-
 	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
 	{
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);

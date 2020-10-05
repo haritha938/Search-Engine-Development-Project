@@ -10,7 +10,7 @@ import edu.csulb.PositionalInvertedIndexer;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
+
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

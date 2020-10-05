@@ -2,6 +2,7 @@ package cecs429.documents;
 
 import com.google.gson.Gson;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.nio.file.Files;
@@ -11,6 +12,11 @@ public class JsonFileDocument implements FileDocument{
     private int mDocumentId;
     private Path mFilePath;
     private String title;
+    private String url;
+    private String body;
+    private String author;
+
+
     /**
      * Constructs a JsonFileDocument with the given document ID representing the file at the given
      * absolute file path.
@@ -24,8 +30,9 @@ public class JsonFileDocument implements FileDocument{
         }catch(Exception e){
             e.printStackTrace();
         }
+
     }
-    @Override
+        @Override
     public Path getFilePath() {
         return mFilePath;
     }
@@ -51,7 +58,6 @@ public class JsonFileDocument implements FileDocument{
     public String getTitle() {
         return title;
     }
-
     public static FileDocument loadJsonFileDocument(Path absolutePath, int documentId) {
         return new JsonFileDocument(documentId, absolutePath);
     }
