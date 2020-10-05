@@ -4,6 +4,7 @@ import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
 import cecs429.index.Index;
 import cecs429.index.Posting;
+import cecs429.index.SoundexIndex;
 import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.TokenProcessor;
 import edu.csulb.PositionalInvertedIndexer;
@@ -12,30 +13,27 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.*;
-
-import static org.junit.runners.Parameterized.*;
-
-
 @RunWith(Parameterized.class)
 @Category(PositionalInvertedIndexer.class)
-public class QueryTest {
-    private static Map<String, List<Posting>> dictionary = new HashMap<>();
+
+public class SoundexTest {
+    /*private static Map<String, List<Posting>> dictionary = new HashMap<>();
     static TokenProcessor tokenProcessor=new AdvanceTokenProcessor();
-    static Index TestIndex=null;
-    private final String TestQuery;
+    static SoundexIndex testIndex=null;
+    private final String authorQuery;
     private final List<Integer> expectedDocumentList;
 
-     public QueryTest(String TestQuery, List<Integer> expectedDocumentList)
-     {
-         this.TestQuery=TestQuery;
-         this.expectedDocumentList=expectedDocumentList;
-     }
-
-   @Parameters(name="TestQuery = \"{0}\" and expected document list = {1}")
+    public SoundexTest(String authorQuery, List<Integer> expectedDocumentList)
+    {
+        this.authorQuery=authorQuery;
+        this.expectedDocumentList=expectedDocumentList;
+    }
+    @Parameterized.Parameters(name="TestQuery = \"{0}\" and expected document list = {1}")
     public static  Collection<Object[]> data()
     {
 
@@ -43,18 +41,18 @@ public class QueryTest {
         String query1, query2, query3, query4, query5, query6, query7;
 
         //Testing single term query
-        query1 = "amazing";
+        query1 = "Robert";
 
         List<Integer> ExpectedDoucmentListForQuery1 = new ArrayList<>();
         ExpectedDoucmentListForQuery1.add(4);
 
         //Testing AND query
-        query2 = "Search engine";
+        query2 = "Rupert";
         List<Integer> ExpectedDoucmentListForQuery2 = new ArrayList<>();
         ExpectedDoucmentListForQuery2.add(1);
 
         //Testing OR query
-        query3 = "CECS529 + TEST";
+        query3 = "Something";
         List<Integer> ExpectedDoucmentListForQuery3 = new ArrayList<>();
         ExpectedDoucmentListForQuery3.add(0);
         ExpectedDoucmentListForQuery3.add(3);
@@ -92,49 +90,6 @@ public class QueryTest {
 
         return expectedResult;
     }
-
-
-
-
-
-    @Test
-    public void TestQuery() {
-        //IdentifyCorpus and CreateIndex --using same methods from the project..but providing params so as to access the test corpus
-        DirectoryCorpus corpus = DirectoryCorpus.loadTextDirectory(Paths.get("./files"), ".txt");
-        Class[] arg = new Class[2];
-        arg[0] = DocumentCorpus.class;
-        arg[1]=TokenProcessor.class;
-        try {
-            Method method = PositionalInvertedIndexer.class.getDeclaredMethod("indexCorpus", arg);
-            method.setAccessible(true);
-            TestIndex= (Index) method.invoke(PositionalInvertedIndexer.class,corpus,  new AdvanceTokenProcessor());
-        }
-        catch ( NoSuchMethodException e)
-        {
-            e.getStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
-
-
-//Creating TestData
-
-
-        //Calculating actual result
-        List<Posting> ActualPostingList = PositionalInvertedIndexer.ParseQueryNGetpostings(TestQuery, TestIndex, tokenProcessor);
-        List<Integer> ActualDocumentList = new ArrayList<>();
-        if (ActualPostingList != null) {
-            for (Posting posting : ActualPostingList) {
-                ActualDocumentList.add(posting.getDocumentId());
-            }
-        }
-
-        //Check whether expected result matches with actualresult.
-        Assert.assertArrayEquals(expectedDocumentList.toArray(),ActualDocumentList.toArray());
-
-    }
-
-
+*/
 }
+

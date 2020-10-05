@@ -77,11 +77,11 @@ public class PositionalInvertedIndexer  {
 				else if(query.startsWith(":author")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
 					//AdvanceTokenProcessor a=new AdvanceTokenProcessor();
-					List<Posting> resultPostings=soundexindex.getPostings(tokenProcessor.processToken(tokenTerm).get(0));
+					List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
 					//System.out.println(resultPostings.size());
 					if(resultPostings!=null){
 						for(Posting p: resultPostings){
-							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
+							System.out.println("Document "+p.getDocumentId()+" " + corpus.getDocument(p.getDocumentId()).getTitle());
 						}
 					}
 					else{
@@ -195,6 +195,7 @@ public class PositionalInvertedIndexer  {
 		}
 		return index;
 	}
+
 	private static void printDocument(String filePath)throws IOException{
 		BufferedReader reader=new BufferedReader(new FileReader(filePath));
 		String line;
@@ -202,6 +203,9 @@ public class PositionalInvertedIndexer  {
 			System.out.println(line);
 		}
 
+	}
+	public SoundexIndex getSoundexindex(){
+		return soundexindex;
 	}
 	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
 	{
@@ -212,6 +216,14 @@ public class PositionalInvertedIndexer  {
 			resultList = queryobject.getPostings(index);
 		}
 		return resultList;
+	}
+	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
+		List<Posting> resultPostings=index.getPostings(tokenProcessor.processToken(query).get(0));
+		//System.out.println(resultPostings.size());
+		if(resultPostings!=null){
+			return resultPostings;
+		}
+		return null;
 	}
 }
 
