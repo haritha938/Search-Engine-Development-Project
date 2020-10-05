@@ -41,12 +41,17 @@ public class TextFileDocument implements FileDocument {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	@Override
 	public String getTitle() {
 		return mFilePath.getFileName().toString();
 	}
-	
+
+	@Override
+	public Boolean hasAuthor() {
+		return false;
+	}
+
 	public static FileDocument loadTextFileDocument(Path absolutePath, int documentId) {
 		return new TextFileDocument(documentId, absolutePath);
 	}

@@ -24,22 +24,58 @@ public class JsonFileDocument implements FileDocument{
     public JsonFileDocument(int id, Path absoluteFilePath) {
         mDocumentId = id;
         mFilePath = absoluteFilePath;
-        try(Reader reader = Files.newBufferedReader(mFilePath)) {
+        /*(try(Reader reader = Files.newBufferedReader(mFilePath)) {
             Gson gson = new Gson();
             title = gson.fromJson(reader, Park.class).getTitle();
         }catch(Exception e){
             e.printStackTrace();
+        }*/
+
+
+        try(Reader reader = Files.newBufferedReader(mFilePath)) {
+            Gson gson = new Gson();
+            //System.out.println(hasAuthor());
+            if(hasAuthor()==false){
+                Park park=gson.fromJson(reader,Park.class);
+                title = park.getTitle();
+                url= park.getUrl();
+                body=park.getBody();
+            }
+            else{
+                Article article;
+                article=gson.fromJson(reader,Article.class);
+                title=article.getTitle();
+                url=article.getUrl();
+                author=article.getAuthor();
+                body=article.getBody();
+                //System.out.println(body);
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
         }
-
-
 
     }
 
     @Override
     public Boolean hasAuthor() {
-        return null;
+        try (Reader reader = Files.newBufferedReader(mFilePath)) {
+            Gson gson = new Gson();
+            author = gson.fromJson(reader, Article.class).getAuthor();
+            if (author != null) {
+                return true;
+            }
+            else
+                return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }        return false;
     }
-
+    public Reader getAuthor(){
+        Reader stringReader=null;
+        stringReader=new StringReader(author);
+        return stringReader;
+    }
     @Override
     public Path getFilePath() {
         return mFilePath;
@@ -53,12 +89,7 @@ public class JsonFileDocument implements FileDocument{
     @Override
     public Reader getContent() {
         Reader stringReader=null;
-        try(Reader reader = Files.newBufferedReader(mFilePath)) {
-            Gson gson = new Gson();
-            stringReader = new StringReader(gson.fromJson(reader, Park.class).getBody());
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+        stringReader=new StringReader(body);
         return stringReader;
     }
 
