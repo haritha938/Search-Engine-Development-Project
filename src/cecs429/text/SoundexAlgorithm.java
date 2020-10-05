@@ -1,6 +1,6 @@
 package cecs429.text;
 
-class SoundexAlgorithm {
+public class SoundexAlgorithm {
     public static String getSoundexCode(String s)
     {
         char[] x = s.toUpperCase().toCharArray();
