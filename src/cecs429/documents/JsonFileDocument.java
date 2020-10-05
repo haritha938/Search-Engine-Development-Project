@@ -31,8 +31,16 @@ public class JsonFileDocument implements FileDocument{
             e.printStackTrace();
         }
 
+
+
     }
-        @Override
+
+    @Override
+    public Boolean hasAuthor() {
+        return null;
+    }
+
+    @Override
     public Path getFilePath() {
         return mFilePath;
     }
