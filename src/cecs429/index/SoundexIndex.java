@@ -54,6 +54,9 @@ public class SoundexIndex {
         return mIndex.get(soundexString);
     }
 
+    public Integer getSize(){
+        return mIndex.size();
+    }
     /*public List<String> getVocabulary(){
         Collections.sort(mVocabulary);
         return Collections.unmodifiableList(mVocabulary);

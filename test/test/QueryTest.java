@@ -75,7 +75,7 @@ public class QueryTest {
         ExpectedDoucmentListForQuery6.add(3);
 
         //Testing wild query
-        query7="t*t case + fi*";
+        query7="t*t case";
         List<Integer> ExpectedDoucmentListForQuery7 = new ArrayList<>();
         ExpectedDoucmentListForQuery7.add(0);
         ExpectedDoucmentListForQuery7.add(3);
@@ -109,6 +109,7 @@ public class QueryTest {
             method.setAccessible(true);
             TestIndex= (Index) method.invoke(PositionalInvertedIndexer.class,corpus,  new AdvanceTokenProcessor());
         }
+
         catch ( NoSuchMethodException e)
         {
             e.getStackTrace();

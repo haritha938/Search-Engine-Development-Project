@@ -3,6 +3,7 @@ package test;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
 import cecs429.index.Index;
+import cecs429.index.PositionalInvertedIndex;
 import cecs429.index.Posting;
 import cecs429.index.SoundexIndex;
 import cecs429.text.AdvanceTokenProcessor;
@@ -18,13 +19,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.*;
+
+import static test.IndexTest.TestQuery;
+
 @RunWith(Parameterized.class)
 @Category(PositionalInvertedIndexer.class)
 
 public class SoundexTest {
-    /*private static Map<String, List<Posting>> dictionary = new HashMap<>();
+    private static Map<String, List<Posting>> dictionary = new HashMap<>();
     static TokenProcessor tokenProcessor=new AdvanceTokenProcessor();
-    static SoundexIndex testIndex=null;
+    private SoundexIndex testSoundexIndex;
+    static Index testIndex=null;
+
     private final String authorQuery;
     private final List<Integer> expectedDocumentList;
 
@@ -38,58 +44,90 @@ public class SoundexTest {
     {
 
         List<Object[]> expectedResult=new ArrayList<>();
-        String query1, query2, query3, query4, query5, query6, query7;
+        String query1, query2, query3, query4;
 
         //Testing single term query
         query1 = "Robert";
 
         List<Integer> ExpectedDoucmentListForQuery1 = new ArrayList<>();
-        ExpectedDoucmentListForQuery1.add(4);
+        ExpectedDoucmentListForQuery1.add(0);
+        ExpectedDoucmentListForQuery1.add(1);
 
         //Testing AND query
         query2 = "Rupert";
         List<Integer> ExpectedDoucmentListForQuery2 = new ArrayList<>();
+        ExpectedDoucmentListForQuery2.add(0);
         ExpectedDoucmentListForQuery2.add(1);
 
         //Testing OR query
         query3 = "Something";
         List<Integer> ExpectedDoucmentListForQuery3 = new ArrayList<>();
         ExpectedDoucmentListForQuery3.add(0);
-        ExpectedDoucmentListForQuery3.add(3);
-        ExpectedDoucmentListForQuery3.add(4);
 
         //Testing query that returns null
         query4 = "call";
-        List<Integer> ExpectedDoucmentListForQuery4 = new ArrayList<>();
-
-        //testing phrasequery
-        query5="\"CECS529 course is amazing\"";
-        List<Integer> ExpectedDoucmentListForQuery5 = new ArrayList<>();
-        ExpectedDoucmentListForQuery5.add(4);
-
-        //Testing Not query
-        query6 = "Test -case -hey";
-        List<Integer> ExpectedDoucmentListForQuery6 = new ArrayList<>();
-        ExpectedDoucmentListForQuery6.add(3);
-
-        //Testing wild query
-        query7="t*t case + fi*";
-        List<Integer> ExpectedDoucmentListForQuery7 = new ArrayList<>();
-        ExpectedDoucmentListForQuery7.add(0);
-        ExpectedDoucmentListForQuery7.add(3);
-
-
+        List<Integer> ExpectedDoucmentListForQuery4=new ArrayList<>();
 
         expectedResult.add(new Object[]{query1,ExpectedDoucmentListForQuery1});
         expectedResult.add(new Object[]{query2,ExpectedDoucmentListForQuery2});
         expectedResult.add(new Object[]{query3,ExpectedDoucmentListForQuery3});
         expectedResult.add(new Object[]{query4,ExpectedDoucmentListForQuery4});
-        expectedResult.add(new Object[]{query5,ExpectedDoucmentListForQuery5});
-        expectedResult.add(new Object[]{query6,ExpectedDoucmentListForQuery6});
-        expectedResult.add(new Object[]{query7,ExpectedDoucmentListForQuery7});
 
         return expectedResult;
     }
-*/
+
+    @Test
+    public void TestQuery() {
+        //IdentifyCorpus and CreateIndex --using same methods from the project..but providing params so as to access the test corpus
+        DirectoryCorpus corpus = DirectoryCorpus.loadJsonDirectory(Paths.get("./files"), ".json");
+        Class[] arg = new Class[2];
+        arg[0] = DocumentCorpus.class;
+        arg[1]= TokenProcessor.class;
+        PositionalInvertedIndexer indexer=new PositionalInvertedIndexer();
+        testSoundexIndex=new SoundexIndex();
+        try {
+
+        /*    Method method = indexer.getClass().getDeclaredMethod("indexCorpus", arg);
+            method.setAccessible(true);
+            testIndex= (Index) method.invoke(indexer,corpus,new AdvanceTokenProcessor());
+
+             Method method = PositionalInvertedIndexer.class.getDeclaredMethod("indexCorpus", arg);
+            method.setAccessible(true);
+            TestIndex= (Index) method.invoke(PositionalInvertedIndexer.class,corpus,  new AdvanceTokenProcessor());
+        */
+            Method method= indexer.getClass().getDeclaredMethod("indexCorpus", DocumentCorpus.class, TokenProcessor.class);
+            method.setAccessible(true);
+            testIndex=(Index)method.invoke(indexer.getClass(),corpus,new AdvanceTokenProcessor());
+           testSoundexIndex=indexer.getSoundexIndex();
+
+            System.out.println(testSoundexIndex.getSize());
+        }
+        catch ( NoSuchMethodException e)
+        {
+            e.getStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+
+//Creating TestData
+
+
+        //Calculating actual result
+      //  List<Posting> ActualPostingList = PositionalInvertedIndexer.ParseQueryNGetpostings(TestQuery, TestIndex, tokenProcessor);
+        List<Posting> actualSoundexList = PositionalInvertedIndexer.getSoundexIndexPostings(authorQuery,testSoundexIndex,tokenProcessor);
+        List<Integer> actualDocumentList = new ArrayList<>();
+        if (actualSoundexList != null) {
+            for (Posting posting : actualSoundexList) {
+                actualDocumentList.add(posting.getDocumentId());
+            }
+        }
+
+        //Check whether expected result matches with actualresult.
+        Assert.assertArrayEquals(expectedDocumentList.toArray(),actualDocumentList.toArray());
+
+    }
 }
 

@@ -23,7 +23,7 @@ import java.util.List;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
-	static SoundexIndex soundexindex;
+	static SoundexIndex soundexindex=null;
 	public static void main(String[] args) {
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
@@ -154,7 +154,7 @@ public class PositionalInvertedIndexer  {
 
 	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
 		HashSet<String> vocabulary = new HashSet<>();
-		soundexindex=new SoundexIndex();
+		 soundexindex=new SoundexIndex();
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
 		JsonFileDocument file;
 
@@ -204,7 +204,7 @@ public class PositionalInvertedIndexer  {
 		}
 
 	}
-	public SoundexIndex getSoundexindex(){
+	public static SoundexIndex getSoundexIndex(){
 		return soundexindex;
 	}
 	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
@@ -218,6 +218,7 @@ public class PositionalInvertedIndexer  {
 		return resultList;
 	}
 	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
+
 		List<Posting> resultPostings=index.getPostings(tokenProcessor.processToken(query).get(0));
 		//System.out.println(resultPostings.size());
 		if(resultPostings!=null){
