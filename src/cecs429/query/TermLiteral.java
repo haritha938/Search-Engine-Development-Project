@@ -19,7 +19,9 @@ public class TermLiteral implements Query {
 	public TermLiteral(String term, TokenProcessor tokenProcessor,boolean isNegativeLiteral) {
 		this.tokenProcessor = tokenProcessor;
 		this.isNegativeLiteral=isNegativeLiteral;
-		mTerm = tokenProcessor.processToken(term).get(0);
+		mTerm = (term.contains("-"))
+				?tokenProcessor.processToken(term.replaceAll("-","")).get(0)
+				:tokenProcessor.processToken(term).get(0);
 	}
 	
 	public String getTerm() {

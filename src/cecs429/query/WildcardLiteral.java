@@ -13,7 +13,7 @@ public class WildcardLiteral implements Query {
     boolean isNegativeLiteral;
     public WildcardLiteral(String term, TokenProcessor tokenProcessor,boolean isNegativeLiteral) {
         queryTerm = term;
-        modifiedTerm = "$"+term+"$";
+        modifiedTerm = "$"+term.toLowerCase(Locale.ENGLISH)+"$";
         this.tokenProcessor = tokenProcessor;
         this.isNegativeLiteral=isNegativeLiteral;
     }
