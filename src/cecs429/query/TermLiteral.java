@@ -7,8 +7,6 @@ import cecs429.text.TokenProcessor;
 
 import java.util.List;
 
-
-
 /**
  * A TermLiteral represents a single term in a subquery.
  */

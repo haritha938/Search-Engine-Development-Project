@@ -31,7 +31,7 @@ public class Posting {
 	public List<Integer> getPositions(){
 		return mPositionsList;
 	}
-//Dt Sep 30
+
 	@Override
 	public boolean equals(Object obj) {
 		boolean result=false;

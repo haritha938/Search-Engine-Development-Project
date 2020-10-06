@@ -8,6 +8,9 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Represents a document that is saved as a simple JSON file in the local file system.
+ */
 public class JsonFileDocument implements FileDocument{
     private int mDocumentId;
     private Path mFilePath;

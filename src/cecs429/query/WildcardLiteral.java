@@ -6,6 +6,9 @@ import cecs429.text.TokenProcessor;
 
 import java.util.*;
 
+/**
+ * A WildcardLiteral represents a wildcard term in a sub-query.
+ */
 public class WildcardLiteral implements Query {
     String queryTerm;
     String modifiedTerm;
@@ -18,6 +21,9 @@ public class WildcardLiteral implements Query {
         this.isNegativeLiteral=isNegativeLiteral;
     }
 
+    /**
+     * @return List of strings that match with given wildcard term after filtering step.
+     */
     private List<String> getPossibleStrings(Index index){
         int kGramSize=3;
 

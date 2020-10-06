@@ -264,15 +264,16 @@ public class BooleanQueryParser {
 				startIndex++;
 				lengthOut--;
 			}
-				if (subquery.substring(startIndex,startIndex+lengthOut).contains("*")){
+			final String substring = subquery.substring(startIndex, startIndex + lengthOut);
+			if (substring.contains("*")){
 					return new Literal(
 							new StringBounds(startIndex,lengthOut),
-							new WildcardLiteral(subquery.substring(startIndex,startIndex+lengthOut),tokenProcessor,isNegativeLiteral)
+							new WildcardLiteral(substring,tokenProcessor,isNegativeLiteral)
 					);
 				}else{
 					return new Literal(
 							new StringBounds(startIndex, lengthOut),
-							new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut),tokenProcessor,isNegativeLiteral));
+							new TermLiteral(substring,tokenProcessor,isNegativeLiteral));
 				}
 		}else{
 			return new Literal(
