@@ -69,7 +69,11 @@ public class OrQuery implements Query {
 			bDocId = B.get(j).getDocumentId();
 
 			if (aDocId == bDocId) {
-				OrMergeResult.add(A.get(i));
+				OrMergeResult.add(
+						new Posting(
+								A.get(i).getDocumentId()
+								,mergePositions(A.get(i).getPositions(),B.get(j).getPositions()
+						)));
 				i++;
 				j++;
 			} else if (aDocId < bDocId) {
@@ -97,7 +101,35 @@ public class OrQuery implements Query {
 		}
 		return OrMergeResult;
 	}
-	
+
+	List<Integer> mergePositions(List<Integer> positionsOfDocA,List<Integer> positionsOfDocB){
+		List<Integer> result = new ArrayList<>();
+		int i=0;
+		int j=0;
+		while(i<positionsOfDocA.size() && j<positionsOfDocB.size()) {
+			if (i == j) {
+				result.add(positionsOfDocA.get(i));
+				i++;
+				j++;
+			} else if (i < j) {
+				result.add(positionsOfDocA.get(i));
+				i++;
+			} else {
+				result.add(positionsOfDocB.get(j));
+				j++;
+			}
+		}
+		while(i<positionsOfDocA.size()){
+			result.add(i);
+			i++;
+		}
+		while(j<positionsOfDocB.size()){
+			result.add(j);
+			j++;
+		}
+		return result;
+	}
+
 	@Override
 	public String toString() {
 		// Returns a string of the form "[SUBQUERY] + [SUBQUERY] + [SUBQUERY]"

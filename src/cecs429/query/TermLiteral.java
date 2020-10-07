@@ -15,11 +15,15 @@ public class TermLiteral implements Query {
 	TokenProcessor tokenProcessor;
 	private boolean isNegativeLiteral;
 	public TermLiteral(String term, TokenProcessor tokenProcessor,boolean isNegativeLiteral) {
-		this.tokenProcessor = tokenProcessor;
-		this.isNegativeLiteral=isNegativeLiteral;
-		mTerm = (term.contains("-"))
-				?tokenProcessor.processToken(term.replaceAll("-","")).get(0)
-				:tokenProcessor.processToken(term).get(0);
+		if(tokenProcessor!=null) {
+			this.tokenProcessor = tokenProcessor;
+			this.isNegativeLiteral = isNegativeLiteral;
+			mTerm = (term.contains("-"))
+					? tokenProcessor.processToken(term.replaceAll("-", "")).get(0)
+					: tokenProcessor.processToken(term).get(0);
+		}else{
+			mTerm = term;
+		}
 	}
 	
 	public String getTerm() {

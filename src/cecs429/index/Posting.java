@@ -13,7 +13,12 @@ public class Posting {
 	public Posting(int documentId) {
 		mDocumentId = documentId;
 	}
-	
+
+	public Posting(int documentId,List<Integer> positionList){
+		this.mDocumentId = documentId;
+		this.mPositionsList = positionList;
+	}
+
 	public Posting(int documentId,int position) {
 		mDocumentId = documentId;
 		mPositionsList = new ArrayList();

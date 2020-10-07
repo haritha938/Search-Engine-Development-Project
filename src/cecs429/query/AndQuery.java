@@ -36,7 +36,7 @@ public class AndQuery implements Query {
 		{
 			List<Posting> postings=new ArrayList<>();
 			List<Posting> ResultantPostings=new ArrayList<>();
-			List<Query> NotQueries=new ArrayList<Query>();
+			List<Query> NotQueries=new ArrayList<>();
 			boolean isFirstPositiveQuery=true;
 			for(int i=0;i<ChildernCount;i++)
 			{
@@ -49,6 +49,8 @@ public class AndQuery implements Query {
 				if(isFirstPositiveQuery)
 				{
 					ResultantPostings=mChildren.get(i).getPostings(index);
+//					if(ResultantPostings==null || ResultantPostings.size()==0)
+//						return new ArrayList<>();
 					isFirstPositiveQuery=false;
 					continue;
 				}
@@ -131,6 +133,8 @@ public class AndQuery implements Query {
 	public List<Posting> AndMerge(List<Posting> A,List<Posting> B)
 	{
 		List<Posting> AndMergeResult = new ArrayList<>();
+//		if(A == null || A.size()==0 || B == null || B.size()==0)
+//			return AndMergeResult;
 		int aDocId = 0, bDocId = 0;
 		int aSize = A.size();
 		int bSize = B.size();
@@ -141,7 +145,10 @@ public class AndQuery implements Query {
 			bDocId = B.get(j).getDocumentId();
 
 			if (aDocId == bDocId) {
-				AndMergeResult.add(A.get(i));
+				AndMergeResult.add(new Posting(
+						A.get(i).getDocumentId()
+						,mergePositions(A.get(i).getPositions(),B.get(j).getPositions()
+				)));
 				i++;
 				j++;
 			} else if (aDocId < bDocId) {
@@ -155,7 +162,35 @@ public class AndQuery implements Query {
 
 		return AndMergeResult;
 	}
-	
+
+	List<Integer> mergePositions(List<Integer> positionsOfDocA,List<Integer> positionsOfDocB){
+		List<Integer> result = new ArrayList<>();
+		int i=0;
+		int j=0;
+		while(i<positionsOfDocA.size() && j<positionsOfDocB.size()) {
+			if (i == j) {
+				result.add(positionsOfDocA.get(i));
+				i++;
+				j++;
+			} else if (i < j) {
+				result.add(positionsOfDocA.get(i));
+				i++;
+			} else {
+				result.add(positionsOfDocB.get(j));
+				j++;
+			}
+		}
+		while(i<positionsOfDocA.size()){
+			result.add(positionsOfDocA.get(i));
+			i++;
+		}
+		while(j<positionsOfDocB.size()){
+			result.add(positionsOfDocB.get(j));
+			j++;
+		}
+		return result;
+	}
+
 	@Override
 	public String toString() {
 

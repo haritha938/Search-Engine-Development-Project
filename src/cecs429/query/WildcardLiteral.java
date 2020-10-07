@@ -55,57 +55,20 @@ public class WildcardLiteral implements Query {
             }
         }
 */
-        /*
+        /**
          * kGramResult will have the valid strings that are fetched
          * from k-gram
          */
-        int search;
-        List<String> kGramResult=null;
-        for(search=0;search<kGramSearchTerm.size();search++) {
-            if(kGramIndex.containsKey(kGramSearchTerm.get(search))) {
-                kGramResult = new ArrayList<>(kGramIndex.get(kGramSearchTerm.get(search)));
-                break;
-            }
-        }
-        if(search==kGramSearchTerm.size()){
-            return new ArrayList<String>();
-        }
-        for(;search<kGramSearchTerm.size();search++){
-            String string = kGramSearchTerm.get(search);
-            int i=0;
-            int j=0;
-            List<String> temp = new ArrayList<>();
-            while(i<kGramResult.size() && kGramIndex.containsKey(string) && j<kGramIndex.get(string).size()){
-                int compare =kGramResult.get(i).compareTo(kGramIndex.get(string).get(j));
-                if(compare<0){
-                    i++;
-                }else if(compare>0){
-                    j++;
-                }else{
-                    temp.add(kGramResult.get(i));
-                    i++;
-                    j++;
-                }
-            }
-            kGramResult.clear();
-            kGramResult.addAll(temp);
-        }
+        List<String> kGramResult =getValidKGrams(kGramSearchTerm,kGramIndex);
         if(kGramResult==null || kGramResult.size()==0)
-            return new ArrayList<String>();
-        List<String> postFitering = new ArrayList<>(kGramResult);
-        if(kGramSearchTerm.size()==1){
-            if(queryTerm.indexOf("*")==0) {
-                postFitering.removeIf(kgram -> !kgram.endsWith(kGramSearchTerm.get(0).substring(0, kGramSearchTerm.get(0).length()-1)));
-            }else{
-                postFitering.removeIf(kgram -> !kgram.startsWith(kGramSearchTerm.get(0).substring(1)));
-            }
-        }else {
+            return new ArrayList<>();
+        List<String> postFiltering = new ArrayList<>(kGramResult);
             for (String kgram : kGramResult) {
                 int lastIndex=-1;
                 for(String searchWord:kGramSearchTerm){
                     if(searchWord.indexOf("$")==0){
                         if(!kgram.startsWith(searchWord.substring(1))) {
-                            postFitering.remove(searchWord);
+                            postFiltering.remove(searchWord);
                             break;
                         }else{
                             lastIndex = 0;
@@ -113,22 +76,21 @@ public class WildcardLiteral implements Query {
                     }
                     else if(searchWord.indexOf("$")==searchWord.length()-1){
                         if(!kgram.startsWith(searchWord.substring(0,searchWord.length()-1))) {
-                            postFitering.remove(searchWord);
+                            postFiltering.remove(searchWord);
                             break;
                         }else{
                             lastIndex = searchWord.length()-1;
                         }
                     }
                     else if(kgram.indexOf(searchWord)<lastIndex){
-                        postFitering.remove(kgram);
+                        postFiltering.remove(kgram);
                         break;
                     }else{
                         lastIndex = kgram.indexOf(searchWord);
                     }
                 }
             }
-        }
-        return postFitering;
+        return postFiltering;
     }
 
     @Override
@@ -152,5 +114,61 @@ public class WildcardLiteral implements Query {
     @Override
     public boolean IsNegativeQuery() {
         return isNegativeLiteral;
+    }
+
+    /**
+     * @return possible list of strings that match with
+     * @param kGramSearchTerm
+     */
+    List<String> getValidKGrams(List<String> kGramSearchTerm,Map<String,List<String>> kGramIndex){
+        int search;
+        List<String> kGramResult=null;
+        for(search=0;search<kGramSearchTerm.size();search++) {
+            if(kGramIndex.containsKey(kGramSearchTerm.get(search))) {
+                if(!kGramSearchTerm.contains("-")) {
+                    kGramResult = new ArrayList<>(kGramIndex.get(kGramSearchTerm.get(search)));
+                }else{
+                    kGramResult = new ArrayList<>(getValidKGrams(tokenProcessor.processToken(kGramSearchTerm.get(search)),kGramIndex));
+                }
+                break;
+            }
+        }
+        if(search==kGramSearchTerm.size()){
+            return new ArrayList<>();
+        }
+        for(;search<kGramSearchTerm.size();search++){
+            String target = kGramSearchTerm.get(search);
+            int i=0;
+            int j=0;
+            List<String> temp = new ArrayList<>();
+            while(i<kGramResult.size() && kGramIndex.containsKey(target) && j<kGramIndex.get(target).size()){
+                int compare =kGramResult.get(i).compareTo(kGramIndex.get(target).get(j));
+                if(compare<0){
+                    i++;
+                }else if(compare>0){
+                    j++;
+                }else{
+                    if(!kGramResult.get(i).contains("-"))
+                        temp.add(kGramResult.get(i));
+                    else{
+                        List<String> tokenizedTerms = tokenProcessor.processToken(kGramResult.get(i));
+                        //Removing unnecessary terms that occurred after stemming of tokens with hyphens
+                        if(target.startsWith("$"))
+                            tokenizedTerms.removeIf(term->!term.startsWith(target.substring(1)));
+                        else if(target.endsWith("$"))
+                            tokenizedTerms.removeIf(term->!term.endsWith(target.substring(0,target.length()-1)));
+                        else{
+                            tokenizedTerms.removeIf(term->term.contains(target));
+                        }
+                        temp.addAll(tokenizedTerms);
+                    }
+                    i++;
+                    j++;
+                }
+            }
+            kGramResult.clear();
+            kGramResult.addAll(temp);
+        }
+        return kGramResult;
     }
 }
