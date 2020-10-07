@@ -57,7 +57,7 @@ public class AdvanceTokenProcessor implements TokenProcessor {
      * @param builder
      * @return
      */
-    private String normalization(String builder){
+    public String normalization(String builder){
         String result =builder;
 	    int i=0;
         while(i<result.length()){

@@ -112,6 +112,7 @@ public class PositionalInvertedIndexer  {
 							.stream()
 							.limit(1000)
 							.forEach(System.out::println);
+					System.out.println("Size of the vocabulary is" + index.getVocabulary().size());
 				}else{
 					List<Posting> resultList = ParseQueryNGetpostings(query,index,tokenProcessor);
 					if (resultList != null && resultList.size()!=0) {
@@ -189,7 +190,13 @@ public class PositionalInvertedIndexer  {
 					index.addTerm(term, document.getId(), i);
 				}
 				i++;
-				index.addToVocab(string.toLowerCase(Locale.ENGLISH));
+				if(string.contains("-")){
+					for(String splitString:string.split("-+")){
+						index.addToVocab(tokenProcessor.normalization(splitString).toLowerCase());
+					}
+				}else{
+					index.addToVocab(tokenProcessor.normalization(string.toLowerCase()));
+				}
 			}
 			try {
 				englishTokenStream.close();
@@ -204,8 +211,7 @@ public class PositionalInvertedIndexer  {
 				authorStrings=authorTokenStream.getTokens();
 				for(String str: authorStrings){
 					for(String authorTerm: tokenProcessor.processToken(str)){
-						System.out.println(authorTerm+" "+document.getId());
-						if(authorTerm.equals("")==false){
+						if(!authorTerm.equals("")){
 							soundexindex.addTerm(authorTerm,file.getId());
 						}
 
@@ -242,7 +248,6 @@ public class PositionalInvertedIndexer  {
 	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
 
 		List<Posting> resultPostings=index.getPostings(tokenProcessor.processToken(query).get(0));
-		//System.out.println(resultPostings.size());
 		if(resultPostings!=null){
 			return resultPostings;
 		}

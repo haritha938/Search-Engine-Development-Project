@@ -14,4 +14,10 @@ public class BasicTokenProcessor implements TokenProcessor {
 		terms.add(token.replaceAll("\\W", "").toLowerCase());
 		return terms;
 	}
+
+	@Override
+	public String normalization(String builder) {
+		return null;
+	}
+
 }
