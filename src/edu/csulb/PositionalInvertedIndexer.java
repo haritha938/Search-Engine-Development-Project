@@ -51,7 +51,6 @@ public class PositionalInvertedIndexer  {
 			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 			long startTime=System.nanoTime();
 			Index index = indexCorpus(corpus,tokenProcessor);
-
 			index.generateKGrams(3);
 			long endTime=System.nanoTime();
 			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
@@ -84,8 +83,11 @@ public class PositionalInvertedIndexer  {
 					}
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
+					startTime=System.nanoTime();
 					index = indexCorpus(corpus, tokenProcessor);
 					index.generateKGrams(3);
+					endTime=System.nanoTime();
+					System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
@@ -114,7 +116,8 @@ public class PositionalInvertedIndexer  {
 					List<Posting> resultList = ParseQueryNGetpostings(query,index,tokenProcessor);
 					if (resultList != null && resultList.size()!=0) {
 						for (Posting p : resultList) {
-							System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
+							Document document=corpus.getDocument(p.getDocumentId());
+							System.out.println( document.getTitle()+" (\""+document.getDocumentName()+"\")" );
 						}
 						System.out.println("Total number of documents fetched: " + resultList.size());
 
@@ -130,11 +133,13 @@ public class PositionalInvertedIndexer  {
 							{
 								break;
 							}
-							String filePath = path + "/" + documentName;
+							//String filePath = path + "/" + documentName;
 							found=false;
 							for(Posting p: resultList) {
-								if (documentName.equals(corpus.getDocument(p.getDocumentId()).getTitle())) {
-									printDocument(filePath);
+								Document document=corpus.getDocument(p.getDocumentId());
+								if (documentName.equals(document.getTitle())) {
+									//printDocument(filePath);
+									printDocument(path+"/"+document.getDocumentName());
 									found=true;
 								}
 							}

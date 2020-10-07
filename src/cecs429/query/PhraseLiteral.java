@@ -2,7 +2,6 @@ package cecs429.query;
 
 import cecs429.index.Index;
 import cecs429.index.Posting;
-import cecs429.text.Stemmer;
 import cecs429.text.TokenProcessor;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +37,6 @@ public class PhraseLiteral implements Query {
 
 	@Override
 	public List<Posting> getPostings(Index index) {
-		// TODO: program this method. Retrieve the postings for the individual terms in the phrase,
-		// and positional merge them together.
 		String[] mTerms = tokens.split(" +");
 		List<Posting> postingListResult
 				= mTerms[0].contains("*")
@@ -59,7 +56,7 @@ public class PhraseLiteral implements Query {
 	}
 
 	@Override
-	public boolean IsNegativeQuery() {
+	public boolean isNegativeQuery() {
 		return isNegativeLiteral;
 	}
 
