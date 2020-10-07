@@ -22,4 +22,10 @@ public interface Document {
 	String getTitle();
 
 	Boolean hasAuthor();
+
+	/**
+	 * The Name of the document along with extension.
+	 */
+	String getDocumentName();
+
 }

@@ -160,19 +160,19 @@ public class BooleanQueryParser {
 		// Locate the next space to find the end of this literal.
 		int nextSpace = subquery.indexOf(' ', startIndex);
 		// Locate the next doublequotes to find the end of this literal.
-		int DquoteStartIndex = subquery.indexOf('"', startIndex);
-		if (nextSpace < 0 && DquoteStartIndex<0) {
+		int dquoteStartIndex = subquery.indexOf('"', startIndex);
+		if (nextSpace < 0 && dquoteStartIndex<0) {
 			// No more literals in this subquery. The subquery is the literal.
 
 			lengthOut = subLength - startIndex;
 		}
-		else if (nextSpace >= 0 && DquoteStartIndex<0){
+		else if (nextSpace >= 0 && dquoteStartIndex<0){
 			lengthOut = nextSpace - startIndex;
 		}
-		else if (nextSpace < 0 && DquoteStartIndex >=0)
+		else if (nextSpace < 0 && dquoteStartIndex >=0)
 		{
-			int DquoteEndIndex=subquery.indexOf('"', DquoteStartIndex+1);
-			if(DquoteEndIndex<0)
+			int dquoteEndIndex=subquery.indexOf('"', dquoteStartIndex+1);
+			if(dquoteEndIndex<0)
 			{
 				//Check with professor if the query is like -> what is binomial expansion of "1 + x" to the power n.
 				//then our main subquery will be-> 'what is binomial expansion of "1 '
@@ -187,34 +187,34 @@ public class BooleanQueryParser {
 				else
 				{
 					//if query like this-> xy"cc, then we send the subquery as xy..so that on next method call, we parse "cc
-					lengthOut=DquoteStartIndex-startIndex;
+					lengthOut=dquoteStartIndex-startIndex;
 					isPhraseLiteral=false;
 				}
 
 			}
 			else {
 				//Assuming the user never gives a query like-> xy"cccs" . And always gives the same query like this-> xy "cccs"
-				//hence here always DquoteStartIndex will be equal to startIndex i.e., DquoteStartIndex==startIndex
+				//hence here always dquoteStartIndex will be equal to startIndex i.e., dquoteStartIndex==startIndex
 				if(subquery.charAt(startIndex) == '"') {
 					//if query like this-> xy "cccs"
-					lengthOut = DquoteEndIndex - startIndex;
+					lengthOut = dquoteEndIndex - startIndex;
 					isPhraseLiteral = true;
 				}
 				else
 				{
 					//if query like this-> xy"cccs", then we send the subquery as xy..so that on next method call, we parse "cccs"
-					lengthOut=DquoteStartIndex-startIndex;
+					lengthOut=dquoteStartIndex-startIndex;
 					isPhraseLiteral=false;
 				}
 
 			}
 		}
-		else //nextSpace > 0 && DquoteStartIndex >0
+		else //nextSpace > 0 && dquoteStartIndex >0
 		{
-			if(DquoteStartIndex<nextSpace)
+			if(dquoteStartIndex<nextSpace)
 			{
-				int DquoteEndIndex=subquery.indexOf('"', DquoteStartIndex+1);
-				if(DquoteEndIndex<0)
+				int dquoteEndIndex=subquery.indexOf('"', dquoteStartIndex+1);
+				if(dquoteEndIndex<0)
 				{
 					// call me " to this no."
 					//Check with professor if the query is like -> what is binomial expansion of "(y z) + x" to the power n.
@@ -230,23 +230,23 @@ public class BooleanQueryParser {
 					{
 						//if query like this-> xy"(y z) + x",
 						// More specifically xy"(y z)  then we send the subquery as xy..so that on next method call, we parse "(y z)
-						lengthOut=DquoteStartIndex-startIndex;
+						lengthOut=dquoteStartIndex-startIndex;
 						isPhraseLiteral=false;
 					}
 				}
 				else {
 					//Assuming the user never gives a query like-> xy"cc cs" . And always gives the same query like this-> xy "cc cs".
-					// In this case the subquery will be like->"cc cs" , as DquoteStartIndex < nextSpace
-					//hence here always DquoteStartIndex will be equal to startIndex i.e., DquoteStartIndex==startIndex
+					// In this case the subquery will be like->"cc cs" , as dquoteStartIndex < nextSpace
+					//hence here always dquoteStartIndex will be equal to startIndex i.e., dquoteStartIndex==startIndex
 					if(subquery.charAt(startIndex) == '"') {
 						//if query like this-> xy "cc cs"
-						lengthOut = DquoteEndIndex - startIndex;
+						lengthOut = dquoteEndIndex - startIndex;
 						isPhraseLiteral = true;
 					}
 					else
 					{
 						//if query like this-> xy"cc cs", then we send the subquery as xy..so that on next method call, we parse "cc cs"
-						lengthOut=DquoteStartIndex-startIndex;
+						lengthOut=dquoteStartIndex-startIndex;
 						isPhraseLiteral=false;
 					}
 				}
@@ -264,15 +264,16 @@ public class BooleanQueryParser {
 				startIndex++;
 				lengthOut--;
 			}
-				if (subquery.substring(startIndex,startIndex+lengthOut).contains("*")){
+			final String substring = subquery.substring(startIndex, startIndex + lengthOut);
+			if (substring.contains("*")){
 					return new Literal(
 							new StringBounds(startIndex,lengthOut),
-							new WildcardLiteral(subquery.substring(startIndex,startIndex+lengthOut),tokenProcessor,isNegativeLiteral)
+							new WildcardLiteral(substring,tokenProcessor,isNegativeLiteral)
 					);
 				}else{
 					return new Literal(
 							new StringBounds(startIndex, lengthOut),
-							new TermLiteral(subquery.substring(startIndex, startIndex + lengthOut),tokenProcessor,isNegativeLiteral));
+							new TermLiteral(substring,tokenProcessor,isNegativeLiteral));
 				}
 		}else{
 			return new Literal(

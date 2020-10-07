@@ -9,11 +9,17 @@ import java.util.List;
 public class Posting {
 	private int mDocumentId;
 	private List<Integer> mPositionsList;
-	
+	private String mDocumentName;
+
 	public Posting(int documentId) {
 		mDocumentId = documentId;
 	}
-	
+
+	public Posting(int documentId,List<Integer> positionList){
+		this.mDocumentId = documentId;
+		this.mPositionsList = positionList;
+	}
+
 	public Posting(int documentId,int position) {
 		mDocumentId = documentId;
 		mPositionsList = new ArrayList();
@@ -31,7 +37,7 @@ public class Posting {
 	public List<Integer> getPositions(){
 		return mPositionsList;
 	}
-//Dt Sep 30
+
 	@Override
 	public boolean equals(Object obj) {
 		boolean result=false;

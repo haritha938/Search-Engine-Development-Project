@@ -2,25 +2,19 @@ package cecs429.text;
 
 import org.tartarus.snowball.SnowballStemmer;
 
-import java.lang.StringBuilder;
 import java.lang.String;
 import java.util.*;
-
 
 /**
  * A advance creates terms from tokens by removing non-alphanumeric
  * characters from the beginning and end of the token, but not the middle.
- * 
- * Remove all apostropes or quotation marks (single or double quotes) from anywhere in the string.
- * 
+ * Remove all apostrophes or quotation marks (single or double quotes) from anywhere in the string.
  */
 public class AdvanceTokenProcessor implements TokenProcessor {
 	@Override
 	public List<String> processToken(String token) {
-        List<String> terms = new ArrayList();
+        List<String> terms = new ArrayList<>();
         String term=normalization(token.toLowerCase(Locale.ENGLISH).replaceAll("[\"']", ""));
-
-        //TODO: Need to add stemming code
         if(term.indexOf('-')==-1){
             try {
                 terms.add(stemProcess(normalization(term)));
@@ -28,8 +22,8 @@ public class AdvanceTokenProcessor implements TokenProcessor {
                 throwable.printStackTrace();
             }
         }else{
-           String[] arrofStr=term.split("-+");
-           for(String a: arrofStr){
+           String[] arrayOfStrings =term.split("-+");
+           for(String a: arrayOfStrings ){
                try {
                    terms.add(stemProcess(normalization(a)));
                } catch (Throwable throwable) {
@@ -45,7 +39,11 @@ public class AdvanceTokenProcessor implements TokenProcessor {
 		return terms;
     }
 
-
+    /**
+     * Stem the given @param token
+     * and @return stemmed string
+     * @throws Throwable
+     */
     public String stemProcess(String token) throws Throwable{
         Class stemClass = Class.forName("org.tartarus.snowball.ext.englishStemmer");
         SnowballStemmer stemmer = (SnowballStemmer) stemClass.newInstance();
@@ -54,6 +52,11 @@ public class AdvanceTokenProcessor implements TokenProcessor {
         return stemmer.getCurrent();
 	}
 
+    /**
+     * Removes non-alphanumeric characters from begin and end of string
+     * @param builder
+     * @return
+     */
     private String normalization(String builder){
         String result =builder;
 	    int i=0;

@@ -1,14 +1,18 @@
 package cecs429.documents;
 
+import java.nio.file.Path;
+
 public class Park {
     String body;
     String url;
     String title;
+    Path documentPath;
 
-    public Park(String body, String url, String title) {
+    public Park(String body, String url, String title, Path documentPath) {
         this.body = body;
         this.url = url;
         this.title = title;
+        this.documentPath = documentPath;
     }
 
     public String getTitle() {
@@ -34,4 +38,8 @@ public class Park {
     public void setUrl(String url) {
         this.url = url;
     }
+
+    public String getDocumentName(){return String.valueOf(documentPath.getFileName());}
+
+    public  void setDocumentPath(Path documentPath){this.documentPath = documentPath;}
 }

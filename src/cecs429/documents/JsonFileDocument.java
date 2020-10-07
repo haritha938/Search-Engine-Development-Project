@@ -8,6 +8,9 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Represents a document that is saved as a simple JSON file in the local file system.
+ */
 public class JsonFileDocument implements FileDocument{
     private int mDocumentId;
     private Path mFilePath;
@@ -40,6 +43,7 @@ public class JsonFileDocument implements FileDocument{
                 title = park.getTitle();
                 url= park.getUrl();
                 body=park.getBody();
+                park.setDocumentPath(mFilePath);
             }
             else{
                 Article article;
@@ -48,6 +52,8 @@ public class JsonFileDocument implements FileDocument{
                 url=article.getUrl();
                 author=article.getAuthor();
                 body=article.getBody();
+
+
                 //System.out.println(body);
             }
 
@@ -71,6 +77,12 @@ public class JsonFileDocument implements FileDocument{
             e.printStackTrace();
         }        return false;
     }
+
+    @Override
+    public String getDocumentName() {
+        return String.valueOf(mFilePath.getFileName());
+    }
+
     public Reader getAuthor(){
         Reader stringReader=null;
         stringReader=new StringReader(author);
