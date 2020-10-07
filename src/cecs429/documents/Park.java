@@ -3,6 +3,7 @@ package cecs429.documents;
 import java.nio.file.Path;
 
 public class Park {
+    // creating Park json file field variables
     String body;
     String url;
     String title;
@@ -14,7 +15,7 @@ public class Park {
         this.title = title;
         this.documentPath = documentPath;
     }
-
+    // get and set methods on instance variables
     public String getTitle() {
         return title;
     }
