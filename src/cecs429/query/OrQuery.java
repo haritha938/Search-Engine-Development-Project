@@ -24,15 +24,12 @@ public class OrQuery implements Query {
 	@Override
 	public List<Posting> getPostings(Index index) {
 		List<Posting> result = null;
-		
-		// TODO: program the merge for an OrQuery, by gathering the postings of the composed Query children and
-		// unioning the resulting postings.
+
 		int ChildernCount=mChildren.size();
 		if(ChildernCount>0) {
 			if (ChildernCount == 1) {
 				result = mChildren.get(0).getPostings(index);
-			} else {
-
+			}else{
 				List<Posting> postings = null;
 				List<Posting> ResultantPostings = null;
 				ResultantPostings = mChildren.get(0).getPostings(index);
@@ -55,9 +52,7 @@ public class OrQuery implements Query {
 		return false;
 	}
 
-
-	public List<Posting> OrMerge(List<Posting> A,List<Posting> B)
-	{
+	public List<Posting> OrMerge(List<Posting> A,List<Posting> B) {
 		List<Posting> OrMergeResult = new ArrayList<>();
 		int aDocId = 0, bDocId = 0;
 		int aSize = A.size();
@@ -84,20 +79,15 @@ public class OrQuery implements Query {
 				OrMergeResult.add(B.get(j));
 				j++;
 			}
-
-
+		}
+		while (j < bSize) {
+			OrMergeResult.add(B.get(j));
+			j++;
 		}
 
-
-			while (j < bSize) {
-				OrMergeResult.add(B.get(j));
-				j++;
-			}
-
-			while (i < aSize) {
-				OrMergeResult.add(A.get(i));
-				i++;
-
+		while (i < aSize) {
+			OrMergeResult.add(A.get(i));
+			i++;
 		}
 		return OrMergeResult;
 	}
@@ -120,11 +110,11 @@ public class OrQuery implements Query {
 			}
 		}
 		while(i<positionsOfDocA.size()){
-			result.add(i);
+			result.add(positionsOfDocA.get(i));
 			i++;
 		}
 		while(j<positionsOfDocB.size()){
-			result.add(j);
+			result.add(positionsOfDocB.get(j));
 			j++;
 		}
 		return result;
