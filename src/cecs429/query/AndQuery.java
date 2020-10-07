@@ -15,15 +15,15 @@ public class AndQuery implements Query {
 
 	private List<Query> mChildren;
 	private boolean isNegativeQuery=false;
-	
+
 	public AndQuery(Iterable<Query> children) {
 		mChildren = new ArrayList<>((Collection<? extends Query>) children);
 	}
-	
+
 	@Override
 	public List<Posting> getPostings(Index index) {
 		List<Posting> result = new ArrayList<>();
-		
+
 		// TODO: program the merge for an AndQuery, by gathering the postings of the composed QueryComponents and
 		// intersecting the resulting postings.
 		int ChildernCount=mChildren.size();
@@ -62,8 +62,8 @@ public class AndQuery implements Query {
 					return null;
 
 			}
-			
-			if((notQueries != null ? notQueries.size() : 0) >0)
+
+			if( notQueries.size()  >0)
 			{
 				if(resultantPostings!=null)
 				{
@@ -186,7 +186,7 @@ public class AndQuery implements Query {
 		}
 		return result;
 	}
-
+	
 	@Override
 	public String toString() {
 
