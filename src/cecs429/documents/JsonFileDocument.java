@@ -37,8 +37,7 @@ public class JsonFileDocument implements FileDocument{
 
         try(Reader reader = Files.newBufferedReader(mFilePath)) {
             Gson gson = new Gson();
-            //System.out.println(hasAuthor());
-            if(hasAuthor()==false){
+            if(!hasAuthor()){
                 Park park=gson.fromJson(reader,Park.class);
                 title = park.getTitle();
                 url= park.getUrl();
@@ -52,9 +51,6 @@ public class JsonFileDocument implements FileDocument{
                 url=article.getUrl();
                 author=article.getAuthor();
                 body=article.getBody();
-
-
-                //System.out.println(body);
             }
 
         }catch(Exception e){

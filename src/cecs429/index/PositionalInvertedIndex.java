@@ -42,7 +42,6 @@ public class PositionalInvertedIndex implements Index {
     /**
      * Fetches list of posting of single 
      * @param term
-     * TODO: Need to update for phrase search
      */
     public List<Posting> getPostings(String term){
         return mIndex.get(term);
