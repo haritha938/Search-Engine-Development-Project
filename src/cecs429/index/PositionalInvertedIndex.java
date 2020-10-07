@@ -65,6 +65,10 @@ public class PositionalInvertedIndex implements Index {
         return Collections.unmodifiableMap(kGramsOfVocabulary);
     }
 
+    /**
+     * This method is used to create k-grams
+     * of size @param kGramSize
+     */
     public void generateKGrams(int kGramSize){
         KGram kGram = new KGram(kGramSize);
         kGramsOfVocabulary = kGram.getkGramIndex(getVocabulary());

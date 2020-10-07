@@ -46,22 +46,13 @@ public class WildcardLiteral implements Query {
         }
 
         Map<String,List<String>> kGramIndex = index.getKGrams();
-/*        String smallLengthKGram="";
-        int smallLen=Integer.MAX_VALUE;
-        for(String string:kGramSearchTerm){
-            if(smallLen>kGramIndex.get(string).size()){
-                smallLen=kGramIndex.get(string).size();
-                smallLengthKGram=string;
-            }
-        }
-*/
-        /**
-         * kGramResult will have the valid strings that are fetched
-         * from k-gram
-         */
         List<String> kGramResult =getValidKGrams(kGramSearchTerm,kGramIndex);
         if(kGramResult==null || kGramResult.size()==0)
             return new ArrayList<>();
+
+        /* From here we perform filtering step
+         * to check whether fetched strings match with given wildcard
+         */
         List<String> postFiltering = new ArrayList<>(kGramResult);
             for (String kgram : kGramResult) {
                 int lastIndex=-1;

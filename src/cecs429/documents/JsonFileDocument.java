@@ -27,14 +27,6 @@ public class JsonFileDocument implements FileDocument{
     public JsonFileDocument(int id, Path absoluteFilePath) {
         mDocumentId = id;
         mFilePath = absoluteFilePath;
-        /*(try(Reader reader = Files.newBufferedReader(mFilePath)) {
-            Gson gson = new Gson();
-            title = gson.fromJson(reader, Park.class).getTitle();
-        }catch(Exception e){
-            e.printStackTrace();
-        }*/
-
-
         try(Reader reader = Files.newBufferedReader(mFilePath)) {
             Gson gson = new Gson();
             if(!hasAuthor()){
