@@ -168,11 +168,11 @@ public class AndQuery implements Query {
 		int i=0;
 		int j=0;
 		while(i<positionsOfDocA.size() && j<positionsOfDocB.size()) {
-			if (i == j) {
+			if (positionsOfDocA.get(i).equals(positionsOfDocB.get(j))) {
 				result.add(positionsOfDocA.get(i));
 				i++;
 				j++;
-			} else if (i < j) {
+			} else if (positionsOfDocA.get(i) < positionsOfDocB.get(j)) {
 				result.add(positionsOfDocA.get(i));
 				i++;
 			} else {
