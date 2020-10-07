@@ -23,7 +23,7 @@ import static org.junit.runners.Parameterized.*;
 @RunWith(Parameterized.class)
 @Category(PositionalInvertedIndexer.class)
 public class QueryTest {
-    private static Map<String, List<Posting>> dictionary = new HashMap<>();
+
     static TokenProcessor tokenProcessor=new AdvanceTokenProcessor();
     static Index TestIndex=null;
     private final String TestQuery;
@@ -40,7 +40,7 @@ public class QueryTest {
     {
 
         List<Object[]> expectedResult=new ArrayList<>();
-        String query1, query2, query3, query4, query5, query6, query7;
+        String query1, query2, query3, query4, query5, query6, query7,query8, query9,query10;
 
         //Testing single term query
         query1 = "amazing";
@@ -75,10 +75,28 @@ public class QueryTest {
         ExpectedDoucmentListForQuery6.add(3);
 
         //Testing wild query
-        query7="t*t case";
+        //query7="t*t case";
+        query7="t*s*";
         List<Integer> ExpectedDoucmentListForQuery7 = new ArrayList<>();
         ExpectedDoucmentListForQuery7.add(0);
+        ExpectedDoucmentListForQuery7.add(2);
         ExpectedDoucmentListForQuery7.add(3);
+
+        //Wildphrase query
+        query8="\"CECS5*9 co*rse is amaz*\"";
+        List<Integer> ExpectedDoucmentListForQuery8 = new ArrayList<>();
+        ExpectedDoucmentListForQuery8.add(4);
+
+        //Wild query with AND-NOT
+        query9="t*t -case -is";
+        List<Integer> ExpectedDoucmentListForQuery9 = new ArrayList<>();
+        ExpectedDoucmentListForQuery9.add(3);
+
+        //Wildcard terms with AND
+        query10="t*t ca*e";
+        List<Integer> ExpectedDoucmentListForQuery10 = new ArrayList<>();
+        ExpectedDoucmentListForQuery10.add(0);
+
 
 
 
@@ -89,6 +107,9 @@ public class QueryTest {
         expectedResult.add(new Object[]{query5,ExpectedDoucmentListForQuery5});
         expectedResult.add(new Object[]{query6,ExpectedDoucmentListForQuery6});
         expectedResult.add(new Object[]{query7,ExpectedDoucmentListForQuery7});
+        expectedResult.add(new Object[]{query8,ExpectedDoucmentListForQuery8});
+        expectedResult.add(new Object[]{query9,ExpectedDoucmentListForQuery9});
+        expectedResult.add(new Object[]{query10,ExpectedDoucmentListForQuery10});
 
         return expectedResult;
     }
@@ -108,6 +129,7 @@ public class QueryTest {
             Method method = PositionalInvertedIndexer.class.getDeclaredMethod("indexCorpus", arg);
             method.setAccessible(true);
             TestIndex= (Index) method.invoke(PositionalInvertedIndexer.class,corpus,  new AdvanceTokenProcessor());
+            TestIndex.generateKGrams(3);
         }
 
         catch ( NoSuchMethodException e)

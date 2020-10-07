@@ -36,7 +36,7 @@ public class AndQuery implements Query {
 		{
 			List<Posting> postings=new ArrayList<>();
 			List<Posting> resultantPostings=new ArrayList<>();
-			List<Query> notQueries=new ArrayList<Query>();
+			List<Query> notQueries=new ArrayList<>();
 			boolean isFirstPositiveQuery=true;
 			for(int i=0;i<ChildernCount;i++)
 			{
@@ -54,7 +54,7 @@ public class AndQuery implements Query {
 				}
 
 				postings=mChildren.get(i).getPostings(index);
-				if(postings!=null)
+				if(postings!=null && resultantPostings!=null)
 				{
 					resultantPostings=AndMerge(resultantPostings,postings);
 				}
