@@ -5,50 +5,40 @@ import cecs429.text.SoundexAlgorithm;
 import java.util.*;
 
 public class SoundexIndex {
+    // Creating Map with soundex hash as key and List of postings as values
     private final Map<String, List<Posting>> mIndex;
-   // private List<String> mVocabulary;
+    // Creating soundexAlgorithm instance variable
     private final SoundexAlgorithm soundexAlgorithm;
     public SoundexIndex(){
+        // initializing the instance variables.
         mIndex = new HashMap();
-       // mVocabulary = new ArrayList();
         soundexAlgorithm=new SoundexAlgorithm();
     }
 
     public void addTerm(String term, int documentId){
-        //Updating existing Map entry if term is present
+        // generating the soudex hashcode using soundex algorithm for the given term
         String soundexString= soundexAlgorithm.getSoundexCode(term);
-        //System.out.println(term +" "+soundexString);
         if(mIndex.containsKey(soundexString)){
-
             List<Posting> postingsOfTerm = mIndex.get(soundexString);
-           // System.out.println(postingsOfTerm.size());
+            // getting the last document id that has been added in the posting list for the particular term
             Posting positing = postingsOfTerm.get(postingsOfTerm.size()-1);
-
+            // System.out.println(postingsOfTerm.size());
             if(positing.getDocumentId()!=documentId){
                 Posting newPosting = new Posting(documentId);
                 postingsOfTerm.add(newPosting);
                 mIndex.put(soundexString,postingsOfTerm);
             }
-
-        }else{
-            //System.out.println(term);
-            //System.out.println(term.length());
-
-            //System.out.println(soundexString);
+        }
+        // If the postinglist for the term is not available , creating a new posting list.
+        else{
             Posting newPosting = new Posting(documentId);
             List<Posting> postingsOfTerm = new ArrayList();
             postingsOfTerm.add(newPosting);
             mIndex.put(soundexString, postingsOfTerm);
 
-     //       mVocabulary.add(term);
         }
     }
-
-    /**
-     * Fetches list of posting of single
-     * @param term
-     * TODO: Need to update for phrase search
-     */
+    // getting the soundex postings for the given term
     public List<Posting> getPostings(String term){
         String soundexString=soundexAlgorithm.getSoundexCode(term);
         return mIndex.get(soundexString);
@@ -57,8 +47,5 @@ public class SoundexIndex {
     public Integer getSize(){
         return mIndex.size();
     }
-    /*public List<String> getVocabulary(){
-        Collections.sort(mVocabulary);
-        return Collections.unmodifiableList(mVocabulary);
-    }*/
+
 }

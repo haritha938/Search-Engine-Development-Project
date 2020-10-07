@@ -29,7 +29,9 @@ public class JsonFileDocument implements FileDocument{
         mFilePath = absoluteFilePath;
         try(Reader reader = Files.newBufferedReader(mFilePath)) {
             Gson gson = new Gson();
+            // Checking if the json files has author field using hasAuthor method
             if(!hasAuthor()){
+                // if the json file does not has author field, then we make park object and initialize its respective fields in the object
                 Park park=gson.fromJson(reader,Park.class);
                 title = park.getTitle();
                 url= park.getUrl();
@@ -37,6 +39,7 @@ public class JsonFileDocument implements FileDocument{
                 park.setDocumentPath(mFilePath);
             }
             else{
+                // if the json file has author field, then we make Article object and assign its respective fields in the object.
                 Article article;
                 article=gson.fromJson(reader,Article.class);
                 title=article.getTitle();
@@ -50,7 +53,7 @@ public class JsonFileDocument implements FileDocument{
         }
 
     }
-
+    // hasAuthor method to check if author field is present in the json file. If yes, return true else it returns false
     @Override
     public Boolean hasAuthor() {
         try (Reader reader = Files.newBufferedReader(mFilePath)) {
@@ -65,27 +68,28 @@ public class JsonFileDocument implements FileDocument{
             e.printStackTrace();
         }        return false;
     }
-
+    // return the document name of the file
     @Override
     public String getDocumentName() {
         return String.valueOf(mFilePath.getFileName());
     }
-
+    // returns the Reader object to the author first name and last name
     public Reader getAuthor(){
         Reader stringReader=null;
         stringReader=new StringReader(author);
         return stringReader;
     }
+    // returns the file path
     @Override
     public Path getFilePath() {
         return mFilePath;
     }
-
+    // returns the document id of the file
     @Override
     public int getId() {
         return mDocumentId;
     }
-
+    // returns the reader object of json file body field.
     @Override
     public Reader getContent() {
         Reader stringReader=null;
