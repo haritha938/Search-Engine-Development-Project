@@ -24,6 +24,7 @@ import java.util.Locale;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
+	// Creating a soundexindex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
 	public static void main(String[] args) {
 		BufferedReader reader =
@@ -93,16 +94,24 @@ public class PositionalInvertedIndexer  {
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
 					System.out.println(tokenProcessor.processToken(tokenTerm));
 				}
+				// Checking if the query starts with the word "author"
 				else if(query.startsWith(":author")){
+					// Getting the next immediate word after author
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
+					// Getting the soundexindex positings for the given term
 					List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
+					//System.out.println(resultPostings.size());
+
+					// If the resultant postings are not null, print the postings
 					if(resultPostings!=null){
 						for(Posting p: resultPostings){
 							Document document=corpus.getDocument(p.getDocumentId());
 							System.out.println( document.getTitle()+" (\""+document.getDocumentName()+"\")" );
 
 						}
+						System.out.println("Total number of documents fetched: " + resultPostings.size());
 					}
+					// Else no postings found
 					else{
 						System.out.println("No postings found !");
 					}
@@ -177,10 +186,10 @@ public class PositionalInvertedIndexer  {
 
 	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
 		HashSet<String> vocabulary = new HashSet<>();
-		 soundexindex=new SoundexIndex();
+		// Initializing the the soundexIndex index
+		soundexindex=new SoundexIndex();
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
 		JsonFileDocument file;
-
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
@@ -211,11 +220,14 @@ public class PositionalInvertedIndexer  {
 			Iterable<String> authorStrings;
 			if(document.hasAuthor()) {
 				file = (JsonFileDocument) document;
+				// tokenizing the author field using EnglishTokenStream
 				authorTokenStream=new EnglishTokenStream(file.getAuthor());
 				authorStrings=authorTokenStream.getTokens();
 				for(String str: authorStrings){
+					// Processing each token generated from author field
 					for(String authorTerm: tokenProcessor.processToken(str)){
 						if(!authorTerm.equals("")){
+							// adding it to the soundexindex using addTerm method
 							soundexindex.addTerm(authorTerm,file.getId());
 						}
 
@@ -236,6 +248,7 @@ public class PositionalInvertedIndexer  {
 		}
 
 	}
+	// Returns the soundexIndex instance variable.
 	public static SoundexIndex getSoundexIndex(){
 		return soundexindex;
 	}
@@ -249,6 +262,7 @@ public class PositionalInvertedIndexer  {
 		}
 		return resultList;
 	}
+	// Returns the resultant postings from the given author query
 	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
 
 		List<Posting> resultPostings=index.getPostings(tokenProcessor.processToken(query).get(0));

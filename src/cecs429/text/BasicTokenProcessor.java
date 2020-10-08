@@ -11,13 +11,13 @@ public class BasicTokenProcessor implements TokenProcessor {
 	@Override
 	public List<String> processToken(String token) {
 		List<String> terms = new ArrayList<>();
-		terms.add(token.replaceAll("\\W", "").toLowerCase());
+		terms.add(normalization(token));
 		return terms;
 	}
 
 	@Override
 	public String normalization(String builder) {
-		return null;
+		return builder.replaceAll("\\W", "").toLowerCase();
 	}
 
 }

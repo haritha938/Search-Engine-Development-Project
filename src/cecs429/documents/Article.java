@@ -1,6 +1,7 @@
 package cecs429.documents;
 
 public class Article {
+    /* creating article json file field variables */
     String url;
     String title;
     String subtitle;
@@ -14,7 +15,7 @@ public class Article {
         this.subtitle=subtitle;
         this.author= author;
     }
-
+    /* Get and Set methods for url, title, subtitle, body and author */
     public String getTitle() {
         return title;
     }
