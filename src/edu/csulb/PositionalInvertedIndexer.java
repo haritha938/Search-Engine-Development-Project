@@ -95,12 +95,12 @@ public class PositionalInvertedIndexer  {
 				}
 				else if(query.startsWith(":author")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
-					//AdvanceTokenProcessor a=new AdvanceTokenProcessor();
 					List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
-					//System.out.println(resultPostings.size());
 					if(resultPostings!=null){
 						for(Posting p: resultPostings){
-							System.out.println("Document "+p.getDocumentId()+" " + corpus.getDocument(p.getDocumentId()).getTitle());
+							Document document=corpus.getDocument(p.getDocumentId());
+							System.out.println( document.getTitle()+" (\""+document.getDocumentName()+"\")" );
+
 						}
 					}
 					else{
@@ -110,7 +110,7 @@ public class PositionalInvertedIndexer  {
 				else if (query.equals(":vocab")) {
 					index.getVocabulary()
 							.stream()
-							.limit(1000)
+							.limit(100000)
 							.forEach(System.out::println);
 					System.out.println("Size of the vocabulary is" + index.getVocabulary().size());
 				}else{
@@ -192,10 +192,14 @@ public class PositionalInvertedIndexer  {
 				i++;
 				if(string.contains("-")){
 					for(String splitString:string.split("-+")){
-						index.addToVocab(tokenProcessor.normalization(splitString).toLowerCase());
+						String term=tokenProcessor.normalization(splitString).toLowerCase();
+						if(!term.isEmpty())
+							index.addToVocab(term);
 					}
 				}else{
-					index.addToVocab(tokenProcessor.normalization(string.toLowerCase()));
+					String term=tokenProcessor.normalization(string).toLowerCase();
+					if(!term.isEmpty())
+						index.addToVocab(term);
 				}
 			}
 			try {
