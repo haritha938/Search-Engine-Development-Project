@@ -87,7 +87,7 @@ public class SoundexTest {
             // generating the positional inverted index
             testIndex=(Index)method.invoke(indexer.getClass(),corpus,new AdvanceTokenProcessor());
             // getting the soundex index
-           testSoundexIndex=indexer.getSoundexIndex();
+            testSoundexIndex=indexer.getSoundexIndex();
         }
         catch ( NoSuchMethodException e)
         {

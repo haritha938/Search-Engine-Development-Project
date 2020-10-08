@@ -19,7 +19,7 @@ public class NotQuery implements Query {
     }
 
     @Override
-
+    //notQuery is always a negative query. Hence, returns true
     public boolean isNegativeQuery() {
         return true;
     }

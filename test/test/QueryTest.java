@@ -29,13 +29,13 @@ public class QueryTest {
     private final String TestQuery;
     private final List<Integer> expectedDocumentList;
 
-     public QueryTest(String TestQuery, List<Integer> expectedDocumentList)
-     {
-         this.TestQuery=TestQuery;
-         this.expectedDocumentList=expectedDocumentList;
-     }
+    public QueryTest(String TestQuery, List<Integer> expectedDocumentList)
+    {
+        this.TestQuery=TestQuery;
+        this.expectedDocumentList=expectedDocumentList;
+    }
 
-   @Parameters(name="TestQuery = \"{0}\" and expected document list = {1}")
+    @Parameters(name="TestQuery = \"{0}\" and expected document list = {1}")
     public static  Collection<Object[]> data()
     {
 
@@ -97,9 +97,6 @@ public class QueryTest {
         List<Integer> ExpectedDoucmentListForQuery10 = new ArrayList<>();
         ExpectedDoucmentListForQuery10.add(0);
 
-
-
-
         expectedResult.add(new Object[]{query1,ExpectedDoucmentListForQuery1});
         expectedResult.add(new Object[]{query2,ExpectedDoucmentListForQuery2});
         expectedResult.add(new Object[]{query3,ExpectedDoucmentListForQuery3});
@@ -115,9 +112,6 @@ public class QueryTest {
     }
 
 
-
-
-
     @Test
     public void TestQuery() {
         //IdentifyCorpus and CreateIndex --using same methods from the project..but providing params so as to access the test corpus
@@ -128,7 +122,9 @@ public class QueryTest {
         try {
             Method method = PositionalInvertedIndexer.class.getDeclaredMethod("indexCorpus", arg);
             method.setAccessible(true);
+            //Generating the index by calling indexCorpus method
             TestIndex= (Index) method.invoke(PositionalInvertedIndexer.class,corpus,  new AdvanceTokenProcessor());
+            //adding k-grams to the index
             TestIndex.generateKGrams(3);
         }
 
@@ -140,10 +136,6 @@ public class QueryTest {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-
-
-//Creating TestData
-
 
         //Calculating actual result
         List<Posting> ActualPostingList = PositionalInvertedIndexer.ParseQueryNGetpostings(TestQuery, TestIndex, tokenProcessor);

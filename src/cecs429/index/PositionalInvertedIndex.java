@@ -5,7 +5,7 @@ import cecs429.tolerantRetrieval.KGram;
 import java.util.*;
 
 public class PositionalInvertedIndex implements Index {
-    
+
     private final Map<String, List<Posting>> mIndex;
     private List<String> mVocabulary;
     private Map<String,List<String>> kGramsOfVocabulary;
@@ -22,7 +22,7 @@ public class PositionalInvertedIndex implements Index {
 
             List<Posting> postingsOfTerm = mIndex.get(term);
             Posting positing = postingsOfTerm.get(postingsOfTerm.size()-1);
-            
+
             if(positing.getDocumentId()==documentId){
                 positing.addPositionToExistingTerm(position);
             }else{

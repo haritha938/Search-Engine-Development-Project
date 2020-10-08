@@ -14,18 +14,18 @@ import java.util.stream.Collectors;
 public class OrQuery implements Query {
 	// The components of the Or query.
 	private List<Query> mChildren;
-	
+
 	public OrQuery(Iterable<Query> children) {
 
-		//mChildren = new ArrayList<>(children);
 		mChildren = new ArrayList<>((Collection<? extends Query>) children);
 	}
-	
+
 	@Override
 	public List<Posting> getPostings(Index index) {
 		List<Posting> result = null;
 
 		int ChildernCount=mChildren.size();
+		//if there are any orQuery objects then perform orMerge on them
 		if(ChildernCount>0) {
 			if (ChildernCount == 1) {
 				result = mChildren.get(0).getPostings(index);
@@ -52,6 +52,8 @@ public class OrQuery implements Query {
 		return false;
 	}
 
+
+	//Logic for merging two list using OrMerge
 	public List<Posting> OrMerge(List<Posting> A,List<Posting> B) {
 		List<Posting> OrMergeResult = new ArrayList<>();
 		int aDocId = 0, bDocId = 0;
@@ -92,6 +94,7 @@ public class OrQuery implements Query {
 		return OrMergeResult;
 	}
 
+	//Merging postions of the postings with same docId, so as to get accurate results while performing wildcard queries.
 	List<Integer> mergePositions(List<Integer> positionsOfDocA,List<Integer> positionsOfDocB){
 		List<Integer> result = new ArrayList<>();
 		int i=0;
@@ -124,7 +127,7 @@ public class OrQuery implements Query {
 	public String toString() {
 		// Returns a string of the form "[SUBQUERY] + [SUBQUERY] + [SUBQUERY]"
 		return "(" +
-		 String.join(" + ", mChildren.stream().map(c -> c.toString()).collect(Collectors.toList()))
-		 + " )";
+				String.join(" + ", mChildren.stream().map(c -> c.toString()).collect(Collectors.toList()))
+				+ " )";
 	}
 }

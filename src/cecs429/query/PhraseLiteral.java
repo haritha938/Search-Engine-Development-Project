@@ -23,12 +23,12 @@ public class PhraseLiteral implements Query {
 	public PhraseLiteral(List<String> terms) {
 		mTerms.addAll(terms);
 	}
-	
+
 	/**
 	 * Constructs a PhraseLiteral given a string with one or more individual terms separated by spaces.
 	 */
 	public PhraseLiteral(String terms, TokenProcessor tokenProcessor,boolean isNegativeLiteral) {
-        this.isNegativeLiteral=isNegativeLiteral;
+		this.isNegativeLiteral=isNegativeLiteral;
 		int size=terms.length();
 		this.tokens=terms.substring(terms.indexOf("\"")< size-1? terms.indexOf("\"")+1:0,size-1);
 		this.tokenProcessor = tokenProcessor;
@@ -38,6 +38,7 @@ public class PhraseLiteral implements Query {
 	@Override
 	public List<Posting> getPostings(Index index) {
 		String[] mTerms = tokens.split(" +");
+		//if the term has "*" then wrap it in wildcarLiteral to get its postings
 		List<Posting> postingListResult
 				= mTerms[0].contains("*")
 				? new WildcardLiteral(mTerms[0], tokenProcessor,isNegativeLiteral).getPostings(index)
@@ -60,6 +61,7 @@ public class PhraseLiteral implements Query {
 		return isNegativeLiteral;
 	}
 
+	//Performing postional merge on the terms in the phrase query"
 	public List<Posting> PositionalMerge(List<Posting> postingsOne, List<Posting> postingsTwo, int distance)
 	{
 		int i=0,j=0,postingOneDocId=0,postingTwoDocId=0;
@@ -71,6 +73,7 @@ public class PhraseLiteral implements Query {
 		{
 			postingOneDocId=postingsOne.get(i).getDocumentId();
 			postingTwoDocId=postingsTwo.get(j).getDocumentId();
+			//if the documentIds match then merging the positions
 			if(postingOneDocId==postingTwoDocId)
 			{
 				Posting mergedPosting=Merge(postingsOne.get(i).getPositions(),postingsTwo.get(j).getPositions(),postingOneDocId,distance);
@@ -98,6 +101,7 @@ public class PhraseLiteral implements Query {
 		return Result;
 	}
 
+	//if the documentIds of the two posting match then merging the positions
 	public Posting Merge(List<Integer> positionListOne,List<Integer> positionListTwo,int documentId, int distance)
 	{
 
@@ -110,7 +114,7 @@ public class PhraseLiteral implements Query {
 		{
 			int postionOfDoc1=positionListOne.get(i);
 			int postionOfDoc2=positionListTwo.get(j);
-					//postionOfDoc1+ distance;
+			//postionOfDoc1+ distance;
 			if(postionOfDoc2== postionOfDoc1+ distance)
 			{
 				if(resultantPosting==null)

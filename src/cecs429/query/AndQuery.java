@@ -24,7 +24,7 @@ public class AndQuery implements Query {
 	public List<Posting> getPostings(Index index) {
 		List<Posting> result = new ArrayList<>();
 
-		// TODO: program the merge for an AndQuery, by gathering the postings of the composed QueryComponents and
+		//  program the merge for an AndQuery, by gathering the postings of the composed QueryComponents and
 		// intersecting the resulting postings.
 		int ChildernCount=mChildren.size();
 		if(ChildernCount==1)
@@ -40,12 +40,14 @@ public class AndQuery implements Query {
 			boolean isFirstPositiveQuery=true;
 			for(int i=0;i<ChildernCount;i++)
 			{
+				//if the query is negative then add it to norQueries list
 				if(mChildren.get(i).isNegativeQuery())
 				{
 					Query q=new NotQuery(mChildren.get(i));
 					notQueries.add(q);
 					continue;
 				}
+				//Assigning first positive query posting to 'resultantPostings'
 				if(isFirstPositiveQuery)
 				{
 					resultantPostings=mChildren.get(i).getPostings(index);
@@ -63,6 +65,7 @@ public class AndQuery implements Query {
 
 			}
 
+			//If there are any notQueries perform AndNotmerge
 			if( notQueries.size()  >0)
 			{
 				if(resultantPostings!=null)
@@ -87,7 +90,8 @@ public class AndQuery implements Query {
 	}
 
 
-    public  List<Posting> andNotMerge(List<Posting> posTermPosting, List<Query> notQuery, int index, Index corpusIndex)
+	//This method performs an AndNot Merge on one postive term and a negative term , then returns the resulting posting list after the merge
+	public  List<Posting> andNotMerge(List<Posting> posTermPosting, List<Query> notQuery, int index, Index corpusIndex)
 	{
 		if(index<0)
 		{
@@ -128,6 +132,8 @@ public class AndQuery implements Query {
 			return andNotMerge(result,notQuery,index-1,corpusIndex);
 		}
 	}
+
+	//Merges two lists using AndMerge logic
 	public List<Posting> AndMerge(List<Posting> listA,List<Posting> listB)
 	{
 		List<Posting> andMergeResult = new ArrayList<>();
@@ -159,6 +165,7 @@ public class AndQuery implements Query {
 		return andMergeResult;
 	}
 
+	//Merging postions of the postings with same docId, so as to get accurate results while performing wildcard queries.
 	List<Integer> mergePositions(List<Integer> positionsOfDocA,List<Integer> positionsOfDocB){
 		List<Integer> result = new ArrayList<>();
 		int i=0;
@@ -186,11 +193,11 @@ public class AndQuery implements Query {
 		}
 		return result;
 	}
-	
+
 	@Override
 	public String toString() {
 
 		return
-		 String.join(" ", mChildren.stream().map(c -> c.toString()).collect(Collectors.toList()));
+				String.join(" ", mChildren.stream().map(c -> c.toString()).collect(Collectors.toList()));
 	}
 }
