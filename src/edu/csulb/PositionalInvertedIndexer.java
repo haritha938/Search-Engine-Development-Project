@@ -110,6 +110,35 @@ public class PositionalInvertedIndexer  {
 
 						}
 						System.out.println("Total number of documents fetched: " + resultPostings.size());
+
+						while(true) {
+							System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
+							documentName = reader.readLine();
+							if (documentName.equalsIgnoreCase("query")) {
+								break;
+							}
+							if (documentName.equalsIgnoreCase(":q")) {
+								break;
+							}
+							//String filePath = path + "/" + documentName;
+							found = false;
+							for (Posting p : resultPostings) {
+								Document document = corpus.getDocument(p.getDocumentId());
+								if (documentName.equals(document.getTitle())) {
+									Reader printDocument = document.getContent();
+									int documentData = printDocument.read();
+									while (documentData != -1) {
+										System.out.print((char) documentData);
+										documentData = printDocument.read();
+									}
+									printDocument.close();
+									found = true;
+								}
+							}
+							if (!found) {
+								System.out.println("Wrong document name. Enter document names from the above list !");
+							}
+						}
 					}
 					// Else no postings found
 					else{
@@ -122,7 +151,8 @@ public class PositionalInvertedIndexer  {
 							.limit(100000)
 							.forEach(System.out::println);
 					System.out.println("Size of the vocabulary is" + index.getVocabulary().size());
-				}else{
+				}
+				else{
 					List<Posting> resultList = ParseQueryNGetpostings(query,index,tokenProcessor);
 					if (resultList != null && resultList.size()!=0) {
 						for (Posting p : resultList) {
@@ -130,6 +160,7 @@ public class PositionalInvertedIndexer  {
 							System.out.println( document.getTitle()+" (\""+document.getDocumentName()+"\")" );
 						}
 						System.out.println("Total number of documents fetched: " + resultList.size());
+
 
 						while(true)
 						{
@@ -143,15 +174,22 @@ public class PositionalInvertedIndexer  {
 							{
 								break;
 							}
-							//String filePath = path + "/" + documentName;
 							found=false;
 							for(Posting p: resultList) {
 								Document document=corpus.getDocument(p.getDocumentId());
 								if (documentName.equals(document.getTitle())) {
-									//printDocument(filePath);
-									printDocument(path+"/"+document.getDocumentName());
+									Reader printDocument = document.getContent();
+									int data = printDocument.read();
+									while (data != -1) {
+										System.out.print((char) data);
+										data = printDocument.read();
+									}
+									printDocument.close();
+									System.out.println();
 									found=true;
 								}
+
+
 							}
 							if(!found) {
 								System.out.println("Wrong document name. Enter document names from the above list !");
@@ -185,7 +223,6 @@ public class PositionalInvertedIndexer  {
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
-		HashSet<String> vocabulary = new HashSet<>();
 		// Initializing the the soundexIndex index
 		soundexindex=new SoundexIndex();
 		PositionalInvertedIndex index = new PositionalInvertedIndex();

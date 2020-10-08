@@ -99,9 +99,12 @@ public class AndQuery implements Query {
 		}
 		else {
 			int i = 0, j = 0;
+			int notTermPostingSize=0,resultPostingSize=0;
 			List<Posting> NegativeTermpostings=notQuery.get(index).getPostings(corpusIndex);
-			int notTermPostingSize=NegativeTermpostings.size();
-			int resultPostingSize=posTermPosting.size();
+			if(NegativeTermpostings!=null)
+			   notTermPostingSize=NegativeTermpostings.size();
+			if(posTermPosting!=null)
+			  resultPostingSize=posTermPosting.size();
 			List<Posting> result=new ArrayList<>();
 			while (i<resultPostingSize && j<notTermPostingSize)
 			{
