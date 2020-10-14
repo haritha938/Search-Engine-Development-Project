@@ -4,10 +4,7 @@ import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.JsonFileDocument;
-import cecs429.index.Index;
-import cecs429.index.PositionalInvertedIndex;
-import cecs429.index.Posting;
-import cecs429.index.SoundexIndex;
+import cecs429.index.*;
 import cecs429.query.BooleanQueryParser;
 import cecs429.query.Query;
 import cecs429.text.AdvanceTokenProcessor;
@@ -18,9 +15,8 @@ import cecs429.text.TokenProcessor;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
+
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
@@ -52,6 +48,11 @@ public class PositionalInvertedIndexer  {
 			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 			long startTime=System.nanoTime();
 			Index index = indexCorpus(corpus,tokenProcessor);
+			DiskIndexWriter diskIndexWriter = new DiskIndexWriter();
+			List<Integer> memoryAddresses = diskIndexWriter.writeIndex(index,
+					Paths.get(path.toString()
+							+File.separator+"index"
+							+File.separator+"postings.bin"));
 			index.generateKGrams(3);
 			long endTime=System.nanoTime();
 			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
@@ -86,6 +87,10 @@ public class PositionalInvertedIndexer  {
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 					startTime=System.nanoTime();
 					index = indexCorpus(corpus, tokenProcessor);
+					memoryAddresses = diskIndexWriter.writeIndex(index,
+							Paths.get(path.toString()
+									+File.separator+"index"
+									+File.separator+"postings.bin"));
 					index.generateKGrams(3);
 					endTime=System.nanoTime();
 					System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
@@ -233,7 +238,8 @@ public class PositionalInvertedIndexer  {
 			int i=1;
 			for(String string: strings){
 				for(String term:tokenProcessor.processToken(string)) {
-					index.addTerm(term, document.getId(), i);
+					if(!term.isEmpty())
+						index.addTerm(term, document.getId(), i);
 				}
 				i++;
 				if(string.contains("-")){
