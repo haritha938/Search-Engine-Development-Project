@@ -18,6 +18,7 @@ import cecs429.text.TokenProcessor;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -26,6 +27,15 @@ public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
 	// Creating a soundexindex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
+
+	/* sql operations */
+	private static Connection connect=null;
+	private static Statement statement=null;
+	private static ResultSet resultSet=null;
+	private static String url="jdbc:mysql://localhost:3306/bplustree";
+	private static String user="root", pass="";
+
+
 	public static void main(String[] args) {
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
@@ -47,6 +57,13 @@ public class PositionalInvertedIndexer  {
 						break;
 				}
 			}
+
+
+			// Testing Sql operations.
+			sqlOperations();
+
+
+
 			System.out.println("Please enter your desired search directory...");
 			Path path = Paths.get(reader.readLine());
 			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
@@ -61,6 +78,7 @@ public class PositionalInvertedIndexer  {
 			query=reader.readLine();
 			String documentName=null;
 			boolean found;
+
 			while (query.length()>0) {
 				if (query.equals(":q")) {
 					break;
@@ -288,6 +306,36 @@ public class PositionalInvertedIndexer  {
 	// Returns the soundexIndex instance variable.
 	public static SoundexIndex getSoundexIndex(){
 		return soundexindex;
+	}
+
+	public static void sqlOperations(){
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			connect = DriverManager
+					.getConnection(url,user,pass);
+			statement = connect.createStatement();
+			resultSet = statement
+					.executeQuery("select * from bptree;");
+
+			while(resultSet.next()){
+				int id=resultSet.getInt(1);
+				String term=resultSet.getString(2);
+				long address=resultSet.getLong(3);
+				System.out.println("id: "+id+" term: "+term+" address: "+address);
+
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		// Setup the connection with the DB
+		 catch (SQLException throwables) {
+			throwables.printStackTrace();
+		}
+
+		// Statements allow to issue SQL queries to the database
+		// Result set get the result of the SQL query
+
+
 	}
 	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
 	{
