@@ -289,7 +289,6 @@ public class PositionalInvertedIndexer  {
 	public static SoundexIndex getSoundexIndex(){
 		return soundexindex;
 	}
-
 	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
 	{
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);
