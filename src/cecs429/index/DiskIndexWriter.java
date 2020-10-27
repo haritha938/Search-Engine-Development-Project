@@ -1,34 +1,45 @@
 package cecs429.index;
 
+import DAO.TermToAddressDao;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
+
 import java.io.*;
-import java.nio.file.Path;
-import java.sql.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class DiskIndexWriter {
-    /* sql operations */
-    private  Connection connect=null;
-    private  Statement statement=null;
-    private  ResultSet resultSet=null;
-    private  String url="jdbc:mysql://localhost:3306/bplustree";
-    private  String user="root", pass="";
-    public List<Integer> writeIndex(Index index, Path path){
+
+    String path;
+    public DiskIndexWriter(String path){
+        this.path = path;
+    }
+
+    public List<Integer> writeIndex(Index index){
         List<Integer> locations = new LinkedList<>();
-        File file = path.toFile();
+
+        File file = new File(path+File.separator+"Postings.bin");
         file.getParentFile().mkdirs();
-
-        // Testing Sql operations.
-        sqlOperations();
-
+        TermToAddressDao termToAddressDao = new TermToAddressDao();
+        Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
+        List<String> sortedTerms = new ArrayList<>(index.getIndex().keySet());
+        Collections.sort(sortedTerms);
+        DB db = DBMaker
+                .fileDB(path+File.separator+"index.db")
+                .fileMmapEnable()
+                .make();
+        ConcurrentMap<String,Long> diskIndex = db
+                .hashMap("diskIndex", Serializer.STRING, Serializer.LONG)
+                .create();
         try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(file))){
             file.createNewFile();
-            Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
-            List<String> sortedTerms = new ArrayList<>(index.getIndex().keySet());
-            Collections.sort(sortedTerms);
+
             for(String term: sortedTerms){
                 List<Posting> postingList = positionalInvertedIndex.get(term);
                 //Adding Term start location to output list
                 locations.add(outputStream.size());
+                diskIndex.put(term, (long)outputStream.size());
                 //Writing Number of postings for given term
                 outputStream.writeInt(postingList.size());
                 int previousDocID=0;
@@ -49,30 +60,24 @@ public class DiskIndexWriter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        db.close();
         return locations;
     }
-    public  void sqlOperations() {
+
+    public void writeLengthOfDocument(List<Double> lengths){
+        File file = new File(path+File.separator+"docWeights.bin");
+        file.getParentFile().mkdirs();
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connect = DriverManager
-                    .getConnection(url, user, pass);
-            statement = connect.createStatement();
-            resultSet = statement
-                    .executeQuery("select * from bptree;");
-
-            while (resultSet.next()) {
-                int id = resultSet.getInt(1);
-                String term = resultSet.getString(2);
-                long address = resultSet.getLong(3);
-                System.out.println("id: " + id + " term: " + term + " address: " + address);
-
-            }
-        } catch (ClassNotFoundException e) {
+            file.createNewFile();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        // Setup the connection with the DB
-        catch (SQLException throwables) {
-            throwables.printStackTrace();
+        try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(file))) {
+            for(Double length:lengths) {
+                outputStream.writeDouble(length);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

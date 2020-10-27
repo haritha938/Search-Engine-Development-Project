@@ -15,13 +15,17 @@ import cecs429.text.TokenProcessor;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
 	// Creating a soundexindex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
+	static DiskIndexWriter diskIndexWriter=null;
 	public static void main(String[] args) {
 		BufferedReader reader =
 				new BufferedReader(new InputStreamReader(System.in));
@@ -46,13 +50,11 @@ public class PositionalInvertedIndexer  {
 			System.out.println("Please enter your desired search directory...");
 			Path path = Paths.get(reader.readLine());
 			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
+			diskIndexWriter = new DiskIndexWriter(path.toString()
+					+File.separator+"index");
 			long startTime=System.nanoTime();
 			Index index = indexCorpus(corpus,tokenProcessor);
-			DiskIndexWriter diskIndexWriter = new DiskIndexWriter();
-			List<Integer> memoryAddresses = diskIndexWriter.writeIndex(index,
-					Paths.get(path.toString()
-							+File.separator+"index"
-							+File.separator+"postings.bin"));
+			List<Integer> memoryAddresses = diskIndexWriter.writeIndex(index);
 			index.generateKGrams(3);
 			long endTime=System.nanoTime();
 			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
@@ -87,10 +89,7 @@ public class PositionalInvertedIndexer  {
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 					startTime=System.nanoTime();
 					index = indexCorpus(corpus, tokenProcessor);
-					memoryAddresses = diskIndexWriter.writeIndex(index,
-							Paths.get(path.toString()
-									+File.separator+"index"
-									+File.separator+"postings.bin"));
+					memoryAddresses = diskIndexWriter.writeIndex(index);
 					index.generateKGrams(3);
 					endTime=System.nanoTime();
 					System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
@@ -105,7 +104,6 @@ public class PositionalInvertedIndexer  {
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
 					// Getting the soundexindex positings for the given term
 					List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
-					//System.out.println(resultPostings.size());
 
 					// If the resultant postings are not null, print the postings
 					if(resultPostings!=null){
@@ -232,6 +230,8 @@ public class PositionalInvertedIndexer  {
 		soundexindex=new SoundexIndex();
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
 		JsonFileDocument file;
+		Map<String,Integer> termToFreq = new HashMap<>();
+		List<Double> lengthOfDocuments = new ArrayList<>();
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
@@ -245,15 +245,25 @@ public class PositionalInvertedIndexer  {
 				if(string.contains("-")){
 					for(String splitString:string.split("-+")){
 						String term=tokenProcessor.normalization(splitString).toLowerCase();
-						if(!term.isEmpty())
+						if(!term.isEmpty()) {
 							index.addToVocab(term);
+							termToFreq.put(term,termToFreq.getOrDefault(termToFreq.get(term),0)+1);
+						}
 					}
 				}else{
 					String term=tokenProcessor.normalization(string).toLowerCase();
-					if(!term.isEmpty())
+					if(!term.isEmpty()) {
 						index.addToVocab(term);
+						termToFreq.put(term,termToFreq.getOrDefault(termToFreq.get(term),0)+1);
+					}
 				}
 			}
+			int wdt = 0;
+			for(String termKey:termToFreq.keySet()){
+				wdt+=Math.pow(1+Math.log(termToFreq.get(termKey)),2);
+			}
+			lengthOfDocuments.add(Math.sqrt(wdt));
+			termToFreq.clear();
 			try {
 				englishTokenStream.close();
 			} catch (IOException e) {
@@ -277,9 +287,8 @@ public class PositionalInvertedIndexer  {
 					}
 				}
 			}
-
-
 		}
+		diskIndexWriter.writeLengthOfDocument(lengthOfDocuments);
 		return index;
 	}
 
