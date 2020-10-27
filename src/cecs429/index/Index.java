@@ -9,10 +9,16 @@ import java.util.Map;
  */
 public interface Index {
 	/**
-	 * Retrieves a list of Postings of documents that contain the given term.
+	 * Retrieves a list of Postings of documents that contain the given term with positions
 	 */
-	List<Posting> getPostings(String term);
-	
+	List<Posting> getPostingsWithPositions(String term);
+
+	/**
+	 * Retrieves a list of Postings of documents that contain the given term without positions
+	 */
+	List<Posting> getPostingsWithOutPositions(String term);
+
+
 	/**
 	 * A (sorted) list of all terms in the index vocabulary.
 	 */
