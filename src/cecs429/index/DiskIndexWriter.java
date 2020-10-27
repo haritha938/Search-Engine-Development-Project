@@ -12,8 +12,20 @@ import java.util.concurrent.ConcurrentMap;
 public class DiskIndexWriter {
 
     String path;
+    PriorityQueue<Integer> pq;
     public DiskIndexWriter(String path){
         this.path = path;
+        pq=new PriorityQueue<Integer>(10, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+                if(o1<o2)
+                    return 1;
+                else if(o1.equals(o2))
+                        return 0;
+                return -1;
+            }
+        });
+
     }
 
     public List<Integer> writeIndex(Index index){
