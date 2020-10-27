@@ -43,8 +43,13 @@ public class PositionalInvertedIndex implements Index {
      * Fetches list of posting of single 
      * @param term
      */
-    public List<Posting> getPostings(String term){
+    public List<Posting> getPostingsWithPositions(String term){
         return mIndex.get(term);
+    }
+
+    @Override
+    public List<Posting> getPostingsWithOutPositions(String term) {
+        return null;
     }
 
     public List<String> getVocabulary(){
