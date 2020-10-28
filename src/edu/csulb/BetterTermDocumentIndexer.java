@@ -21,7 +21,7 @@ public class BetterTermDocumentIndexer {
 		Index index = indexCorpus(corpus) ;
 		// We aren't ready to use a full query parser; for now, we'll only support single-term queries.
 		String query = "park"; // hard-coded search for "whale"
-		for (Posting p : index.getPostings(query)) {
+		for (Posting p : index.getPostingsWithPositions(query)) {
 			System.out.println("Document " + corpus.getDocument(p.getDocumentId()).getTitle());
 		}
 	}

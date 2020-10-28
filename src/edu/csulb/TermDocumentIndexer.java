@@ -150,7 +150,7 @@ public class TermDocumentIndexer {
 			if(query.equals("quit")) {
 				System.out.print("Thank you!! Good Bye");
 				break;
-			}for (Posting p : index.getPostings(query)) {
+			}for (Posting p : index.getPostingsWithPositions(query)) {
 				System.out.println("Document ID " + p.getDocumentId());
 			}
 		}
