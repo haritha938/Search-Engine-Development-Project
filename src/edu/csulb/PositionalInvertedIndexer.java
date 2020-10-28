@@ -5,8 +5,10 @@ import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.JsonFileDocument;
 import cecs429.index.*;
+import cecs429.query.Accumulator;
 import cecs429.query.BooleanQueryParser;
 import cecs429.query.Query;
+import cecs429.query.RankedQueryParser;
 import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
@@ -23,41 +25,36 @@ import java.util.Map;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
-	// Creating a soundexindex instance variable and assigning it as null.
+	// Creating a soundexIndex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
 	static DiskIndexWriter diskIndexWriter=null;
+	static DocumentCorpus corpus;
+	static Index index;
+	static BufferedReader reader;
+	static int corpusSize;
+	static int limit = 5;
+	static Path path;
+	static DiskPositionalIndex diskPositionalIndex;
 	public static void main(String[] args) {
-		BufferedReader reader =
-				new BufferedReader(new InputStreamReader(System.in));
+		//PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
+		reader = new BufferedReader(new InputStreamReader(System.in));
 		try {
-			System.out.println("Enter your preferred token processor's serial from below options");
-			System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
-			System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
-			loop:while(true) {
-				String tokenizationInput = reader.readLine();
-				switch (tokenizationInput) {
-					case "1":
-						tokenProcessor = new BasicTokenProcessor();
-						break loop;
-					case "2":
-						tokenProcessor = new AdvanceTokenProcessor();
-						break loop;
-					default:
-						System.out.println("Please enter a valid input");
-						break;
-				}
-			}
 			System.out.println("Please enter your desired search directory...");
-			Path path = Paths.get(reader.readLine());
-			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
-			diskIndexWriter = new DiskIndexWriter(path.toString()
-					+File.separator+"index");
-			long startTime=System.nanoTime();
-			Index index = indexCorpus(corpus,tokenProcessor);
-			List<Integer> memoryAddresses = diskIndexWriter.writeIndex(index);
-			index.generateKGrams(3);
-			long endTime=System.nanoTime();
-			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
+			path = Paths.get(reader.readLine());
+			corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
+			corpusSize = corpus.getCorpusSize();
+			System.out.println("Would you like to create an Index or run the queries? Enter \"Y\" to create an index and \"N\" to run queries ");
+			String programMode = reader.readLine();
+			if(programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
+				chooseTokenProcessor();
+				createIndex(path);
+			}
+			diskPositionalIndex = new DiskPositionalIndex(path.toString()+ File.separator+"index");
+			System.out.println("Entering query mode");
+			System.out.println("Which mode would you like to search:");
+			System.out.println("1.Boolean retrieval");
+			System.out.println("2.Ranked retrieval");
+			String queryMode = reader.readLine();
 			System.out.println("Please enter your search query...");
 
 			String query=null;
@@ -68,31 +65,11 @@ public class PositionalInvertedIndexer  {
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
-					System.out.println("Enter your preferred token processor's serial from below options");
-					System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
-					System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
-					loop:while(true) {
-						int tokenizationInput = Integer.parseInt(reader.readLine());
-						switch (tokenizationInput) {
-							case 1:
-								tokenProcessor = new BasicTokenProcessor();
-								break loop;
-							case 2:
-								tokenProcessor = new AdvanceTokenProcessor();
-								break loop;
-							default:
-								System.out.println("Please enter a valid input");
-								break;
-						}
-					}
+					chooseTokenProcessor();
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
-					startTime=System.nanoTime();
-					index = indexCorpus(corpus, tokenProcessor);
-					memoryAddresses = diskIndexWriter.writeIndex(index);
-					index.generateKGrams(3);
-					endTime=System.nanoTime();
-					System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
+					corpusSize = corpus.getCorpusSize();
+					createIndex(path);
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
@@ -102,7 +79,7 @@ public class PositionalInvertedIndexer  {
 				else if(query.startsWith(":author")){
 					// Getting the next immediate word after author
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
-					// Getting the soundexindex positings for the given term
+					// Getting the soundexIndex postings for the given term
 					List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
 
 					// If the resultant postings are not null, print the postings
@@ -151,70 +128,109 @@ public class PositionalInvertedIndexer  {
 				else if (query.equals(":vocab")) {
 					index.getVocabulary()
 							.stream()
-							.limit(100000)
+							.limit(1000)
 							.forEach(System.out::println);
 					System.out.println("Size of the vocabulary is" + index.getVocabulary().size());
 				}
-				else{
-					List<Posting> resultList = ParseQueryNGetpostings(query,index,tokenProcessor);
-					if (resultList != null && resultList.size()!=0) {
-						for (Posting p : resultList) {
-							Document document=corpus.getDocument(p.getDocumentId());
-							System.out.println( document.getTitle()+" (\""+document.getDocumentName()+"\")" );
-						}
-						System.out.println("Total number of documents fetched: " + resultList.size());
-
-
-						while(true)
-						{
-							System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
-							documentName = reader.readLine();
-							if(documentName.equalsIgnoreCase("query"))
-							{
-								break;
+				else {
+					if (queryMode.equals("1")){
+						List<Posting> resultList = ParseQueryNGetpostings(query, diskPositionalIndex, tokenProcessor);
+						if (resultList != null && resultList.size() != 0) {
+							for (Posting p : resultList) {
+								Document document = corpus.getDocument(p.getDocumentId());
+								System.out.println(document.getTitle() + " (\"" + document.getDocumentName() + "\")");
 							}
-							if(documentName.equalsIgnoreCase(":q"))
-							{
-								break;
-							}
-							found=false;
-							for(Posting p: resultList) {
-								Document document=corpus.getDocument(p.getDocumentId());
-								if (documentName.equals(document.getTitle())) {
-									Reader printDocument = document.getContent();
-									int data = printDocument.read();
-									while (data != -1) {
-										System.out.print((char) data);
-										data = printDocument.read();
-									}
-									printDocument.close();
-									System.out.println();
-									found=true;
+							System.out.println("Total number of documents fetched: " + resultList.size());
+							while (true) {
+								System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
+								documentName = reader.readLine();
+								if (documentName.equalsIgnoreCase("query")) {
+									break;
 								}
-
-
+								if (documentName.equalsIgnoreCase(":q")) {
+									break;
+								}
+								found = false;
+								for (Posting p : resultList) {
+									Document document = corpus.getDocument(p.getDocumentId());
+									if (documentName.equals(document.getTitle())) {
+										Reader printDocument = document.getContent();
+										int data = printDocument.read();
+										while (data != -1) {
+											System.out.print((char) data);
+											data = printDocument.read();
+										}
+										printDocument.close();
+										System.out.println();
+										found = true;
+									}
+								}
+								if (!found) {
+									System.out.println("Wrong document name. Enter document names from the above list !");
+								} else {
+									System.out.println("Do you want to print other selected documents ? (yes/no)");
+									String answer = reader.readLine().toLowerCase();
+									if (answer.equals("yes"))
+										continue;
+									break;
+								}
 							}
-							if(!found) {
-								System.out.println("Wrong document name. Enter document names from the above list !");
-							}
-							else {
-								System.out.println("Do you want to print other selected documents ? (yes/no)");
-
-								String answer = reader.readLine().toLowerCase();
-								if (answer.equals("yes"))
-									continue;
-								break;
-							}
+						} else {
+							System.out.println("No such text can be found in the Corpus!");
 						}
-					} else {
-						System.out.println("No such text can be found in the Corpus!");
+					}else {
+						/*TODO: After disk storage of index an option similar to property file
+							has to be created to store token processor chosen.
+						 */
+						tokenProcessor = new AdvanceTokenProcessor();
+						List<Accumulator> rankedQueries = getRankedPostings(query,diskPositionalIndex,tokenProcessor);
+						if (rankedQueries != null && rankedQueries.size() != 0) {
+							for (Accumulator accumulator : rankedQueries) {
+								Document document = corpus.getDocument(accumulator.getDocumentId());
+								System.out.println(document.getTitle() + " (\"" + document.getDocumentName() + "\") Calculated Accumulator value: " + accumulator.getPriority());
+							}
+							System.out.println("Total number of documents fetched: " + rankedQueries.size());
+							while (true) {
+								System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
+								documentName = reader.readLine();
+								if (documentName.equalsIgnoreCase("query")) {
+									break;
+								}
+								if (documentName.equalsIgnoreCase(":q")) {
+									break;
+								}
+								found = false;
+								for (Accumulator p : rankedQueries) {
+									Document document = corpus.getDocument(p.getDocumentId());
+									if (documentName.equals(document.getTitle())) {
+										Reader printDocument = document.getContent();
+										int data = printDocument.read();
+										while (data != -1) {
+											System.out.print((char) data);
+											data = printDocument.read();
+										}
+										printDocument.close();
+										System.out.println();
+										found = true;
+									}
+								}
+								if (!found) {
+									System.out.println("Wrong document name. Enter document names from the above list !");
+								} else {
+									System.out.println("Do you want to print other selected documents ? (yes/no)");
+									String answer = reader.readLine().toLowerCase();
+									if (answer.equals("yes"))
+										continue;
+									break;
+								}
+							}
+						} else {
+							System.out.println("No such text can be found in the Corpus!");
+						}
 					}
 				}
-				if(documentName!=null)
-				{
-					if(documentName.equals(":q"))
+				if (documentName != null && documentName.equals(":q"))
 					break;
-				}
 				System.out.println("Please enter your search query...");
 				query=reader.readLine();
 			}
@@ -280,7 +296,7 @@ public class PositionalInvertedIndexer  {
 					// Processing each token generated from author field
 					for(String authorTerm: tokenProcessor.processToken(str)){
 						if(!authorTerm.equals("")){
-							// adding it to the soundexindex using addTerm method
+							// adding it to the soundexIndex using addTerm method
 							soundexindex.addTerm(authorTerm,file.getId());
 						}
 
@@ -292,14 +308,6 @@ public class PositionalInvertedIndexer  {
 		return index;
 	}
 
-	private static void printDocument(String filePath)throws IOException{
-		BufferedReader reader=new BufferedReader(new FileReader(filePath));
-		String line;
-		while((line=reader.readLine())!=null){
-			System.out.println(line);
-		}
-
-	}
 	// Returns the soundexIndex instance variable.
 	public static SoundexIndex getSoundexIndex(){
 		return soundexindex;
@@ -314,6 +322,17 @@ public class PositionalInvertedIndexer  {
 		}
 		return resultList;
 	}
+
+	public static List<Accumulator> getRankedPostings(String query,Index index,TokenProcessor tokenProcessor){
+		RankedQueryParser rankedQueryParser = new RankedQueryParser(index
+				,corpusSize
+				,path.toString()+File.separator+"index"
+				,limit
+				,tokenProcessor);
+		List<Accumulator> searchResult = rankedQueryParser.getPostings(query);
+		return  searchResult;
+	}
+
 	// Returns the resultant postings from the given author query
 	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
 
@@ -322,6 +341,42 @@ public class PositionalInvertedIndexer  {
 			return resultPostings;
 		}
 		return null;
+	}
+	public static DocumentCorpus createIndex(Path path){
+		diskIndexWriter = new DiskIndexWriter(path.toString()
+				+File.separator+"index");
+		long startTime=System.nanoTime();
+		index = indexCorpus(corpus,tokenProcessor);
+		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
+		index.generateKGrams(3);
+		long endTime=System.nanoTime();
+		System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
+		return corpus;
+	}
+
+	public static void chooseTokenProcessor(){
+		System.out.println("Enter your preferred token processor's serial from below options");
+		System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
+		System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostrophes and quotation marks, handles hyphens, lowercase letters and uses stemming");
+		loop:while(true) {
+			String tokenizationInput = null;
+			try {
+				tokenizationInput = reader.readLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			switch (tokenizationInput) {
+				case "1":
+					tokenProcessor = new BasicTokenProcessor();
+					break loop;
+				case "2":
+					tokenProcessor = new AdvanceTokenProcessor();
+					break loop;
+				default:
+					System.out.println("Please enter a valid input");
+					break;
+			}
+		}
 	}
 }
 
