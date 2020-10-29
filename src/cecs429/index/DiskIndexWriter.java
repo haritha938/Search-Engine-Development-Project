@@ -26,7 +26,6 @@ public class DiskIndexWriter {
      */
     public List<Long> writeIndex(Index index){
         List<Long> locations = new LinkedList<>();
-
         File postingsFile = new File(path,"Postings.bin");
         File mapDBFile = new File(path,"positionalIndex.db");
         postingsFile.getParentFile().mkdirs();
@@ -37,44 +36,45 @@ public class DiskIndexWriter {
         Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
         List<String> sortedTerms = new ArrayList<>(index.getIndex().keySet());
         Collections.sort(sortedTerms);
-        DB db = DBMaker
-                .fileDB(path+File.separator+"positionalIndex.db")
+        try (DB db = DBMaker
+                .fileDB(path + File.separator + "positionalIndex.db")
                 .fileMmapEnable()
-                .make();
-        ConcurrentMap<String,Long> diskIndex = db
-                .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                .create();
+                .make()) {
+                ConcurrentMap<String, Long> diskIndex = db
+                        .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                        .create();
 
-        try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))){
-            postingsFile.createNewFile();
-            for(String term: sortedTerms){
-                List<Posting> postingList = positionalInvertedIndex.get(term);
-                //Writing current stream location to output list and dictionary of term to address
-                locations.add((long)outputStream.size());
-                diskIndex.put(term, (long)outputStream.size());
-                //Writing Number of postings for given term; dft
-                outputStream.writeInt(postingList.size());
-                int previousDocID=0;
-                for(Posting posting:postingList){
-                    //Writing gap of document ID of a posting; d
-                    outputStream.writeInt(posting.getDocumentId()-previousDocID);
-                    //Writing weight of @term, @posting's document Id; wdt
-                    outputStream.writeDouble(1+Math.log(posting.getPositions().size()));
-                    previousDocID=posting.getDocumentId();
-                    //Writing Number of positions for given posting; tftd
-                    outputStream.writeInt(posting.getPositions().size());
-                    int previousPosition=0;
-                    for(Integer position:posting.getPositions()){
-                        //Writing gap of positions of posting; p
-                        outputStream.writeInt(position-previousPosition);
-                        previousPosition=position;
+            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
+                postingsFile.createNewFile();
+                for (String term : sortedTerms) {
+                    List<Posting> postingList = positionalInvertedIndex.get(term);
+                    //Writing current stream location to output list and dictionary of term to address
+                    locations.add((long) outputStream.size());
+                    diskIndex.put(term, (long) outputStream.size());
+                    //Writing Number of postings for given term; dft
+                    outputStream.writeInt(postingList.size());
+                    int previousDocID = 0;
+                    for (Posting posting : postingList) {
+                        //Writing gap of document ID of a posting; d
+                        outputStream.writeInt(posting.getDocumentId() - previousDocID);
+                        //Writing weight of @term, @posting's document Id; wdt
+                        outputStream.writeDouble(1 + Math.log(posting.getPositions().size()));
+                        previousDocID = posting.getDocumentId();
+                        //Writing Number of positions for given posting; tftd
+                        outputStream.writeInt(posting.getPositions().size());
+                        int previousPosition = 0;
+                        for (Integer position : posting.getPositions()) {
+                            //Writing gap of positions of posting; p
+                            outputStream.writeInt(position - previousPosition);
+                            previousPosition = position;
+                        }
                     }
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            db.close();
         }
-        db.close();
         return locations;
     }
 

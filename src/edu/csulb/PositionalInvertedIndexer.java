@@ -13,7 +13,6 @@ import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
-
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
@@ -35,6 +33,9 @@ public class PositionalInvertedIndexer  {
 	static int limit = 5;
 	static Path path;
 	static DiskPositionalIndex diskPositionalIndex;
+	static SoundexIndexWriter sIndexWriter=null;
+	static SoundexDiskReader soundexdiskreader=null;
+
 	public static void main(String[] args) {
 		//PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		reader = new BufferedReader(new InputStreamReader(System.in));
@@ -50,6 +51,8 @@ public class PositionalInvertedIndexer  {
 				createIndex(path);
 			}
 			diskPositionalIndex = new DiskPositionalIndex(path.toString()+ File.separator+"index");
+			soundexdiskreader=new SoundexDiskReader(path.toString()+File.separator+"index");
+
 			System.out.println("Entering query mode");
 			System.out.println("Which mode would you like to search:");
 			System.out.println("1.Boolean retrieval");
@@ -80,8 +83,8 @@ public class PositionalInvertedIndexer  {
 					// Getting the next immediate word after author
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
 					// Getting the soundexIndex postings for the given term
-					List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
-
+					//List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
+					List<Posting> resultPostings=getSoundexDiskIndexPostings(tokenTerm,soundexdiskreader,tokenProcessor);
 					// If the resultant postings are not null, print the postings
 					if(resultPostings!=null){
 						for(Posting p: resultPostings){
@@ -342,12 +345,30 @@ public class PositionalInvertedIndexer  {
 		}
 		return null;
 	}
+	public static List<Posting> getSoundexDiskIndexPostings(String query,Index index,TokenProcessor tokenprocessor){
+		List<Posting> resultPostings=index.getPostingsWithOutPositions(tokenprocessor.processToken(query).get(0));
+		if(resultPostings!=null)
+				return resultPostings;
+		return null;
+	}
 	public static DocumentCorpus createIndex(Path path){
 		diskIndexWriter = new DiskIndexWriter(path.toString()
 				+File.separator+"index");
+		sIndexWriter=new SoundexIndexWriter(path.toString()+File.separator+"index");
 		long startTime=System.nanoTime();
 		index = indexCorpus(corpus,tokenProcessor);
+		SoundexIndex soundexindex=getSoundexIndex();
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
+		List<Long> soundexAddresses=  sIndexWriter.writeSouondexIndex(soundexindex);
+
+		if(soundexAddresses!=null){
+			for(int i=0;i<soundexAddresses.size();i++)
+				System.out.println(soundexAddresses.get(i));
+
+		}
+		else
+				System.out.println("soundex address is null !");
+
 		index.generateKGrams(3);
 		long endTime=System.nanoTime();
 		System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
