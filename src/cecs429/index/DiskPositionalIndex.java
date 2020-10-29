@@ -30,13 +30,18 @@ public class DiskPositionalIndex implements Index{
                 .fileDB(path+File.separator+"positionalIndex.db")
                 .fileMmapEnable()
                 .make();
-        ConcurrentMap<String,Long> diskIndex = db
+        ConcurrentMap<String,Long> diskIndex;
+        diskIndex = db
                 .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                 .open();
 
         File file = new File(path,"Postings.bin");
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file,"r")) {
+
+            if(diskIndex.get(term)==null)
+                    return null;
+
             long address = diskIndex.get(term);
             randomAccessFile.seek(address);
             byte[] readIntBuffer = new byte[4];
