@@ -1,5 +1,6 @@
 package cecs429.index;
 
+import cecs429.text.SoundexAlgorithm;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -16,8 +17,19 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DiskPositionalIndex implements Index{
     String path;
+    DB soundexDb;
+    ConcurrentMap<String,Long> sdiskIndex;
+    File file;
     public DiskPositionalIndex(String path){
         this.path = path;
+         soundexDb = DBMaker
+                .fileDB(path+File.separator+"soundexPositions.db")
+                .fileMmapEnable()
+                .make();
+        sdiskIndex = soundexDb
+                .hashMap("address", Serializer.STRING, Serializer.LONG)
+                .open();
+        file = new File(path,"SoundexPostings.bin");
     }
 
     /**
@@ -136,9 +148,42 @@ public class DiskPositionalIndex implements Index{
     public void generateKGrams(int kGramSize) {
 
     }
-
     @Override
     public Map<String, List<Posting>> getIndex() {
         return null;
+    }
+
+
+    public List<Posting> getSoundexPostings(String term){
+
+        List<Posting> postingList = null;
+
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file,"r")) {
+
+            String s1= SoundexAlgorithm.getSoundexCode(term);
+            if(sdiskIndex.get(s1)==null){
+                return null;
+            }
+            long address = sdiskIndex.get(s1);
+            randomAccessFile.seek(address);
+            byte[] readIntBuffer = new byte[4];
+            byte[] readDoubleBuffer = new byte[8];
+            randomAccessFile.read(readIntBuffer,0,readIntBuffer.length);
+            int numberOfPostings = ByteBuffer.wrap(readIntBuffer).getInt();
+            postingList = new ArrayList<>(numberOfPostings);
+            int previousDocumentId=0;
+            for(int i=0;i<numberOfPostings;i++){
+
+                randomAccessFile.read(readIntBuffer,0,readIntBuffer.length);
+                int currentDocumentId = ByteBuffer.wrap(readIntBuffer).getInt()+previousDocumentId;
+
+                postingList.add(new Posting(currentDocumentId));
+                previousDocumentId = currentDocumentId;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // db.close();
+        return postingList;
     }
 }
