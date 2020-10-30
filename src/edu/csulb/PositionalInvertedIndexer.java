@@ -50,6 +50,9 @@ public class PositionalInvertedIndexer  {
 				chooseTokenProcessor();
 				createIndex(path);
 			}
+			else{
+				tokenProcessor=new AdvanceTokenProcessor();
+			}
 			diskPositionalIndex = new DiskPositionalIndex(path.toString()+ File.separator+"index");
 			//soundexdiskreader=new SoundexDiskReader(path.toString()+File.separator+"index");
 
