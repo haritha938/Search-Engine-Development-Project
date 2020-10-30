@@ -123,5 +123,16 @@
     </orderEntry>
     <orderEntry type="library" name="mysql-connector-java-8.0.22" level="project" />
     <orderEntry type="library" name="org.mapdb:mapdb:3.0.8" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../jar_files/mapdb-3.0.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" exported="" name="org.jetbrains.kotlin:kotlin-runtime:1.2.70" level="project" />
+    <orderEntry type="library" exported="" name="org.mapdb:mapdb:3.0.4" level="project" />
   </component>
 </module>
