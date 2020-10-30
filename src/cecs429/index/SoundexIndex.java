@@ -48,4 +48,8 @@ public class SoundexIndex {
         return mIndex.size();
     }
 
+    public Map<String,List<Posting>> getIndex(){
+        return mIndex;
+    }
+
 }
