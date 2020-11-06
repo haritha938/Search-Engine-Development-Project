@@ -104,6 +104,12 @@ public class DiskIndexWriter {
             try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(kgramsFile))) {
                 kgramsFile.createNewFile();
                 for (String kgram : sortedKgrams) {
+                    //Todo: This needs to be corrected.
+                    if(kgram.equals("$"))
+                    {
+                        continue;
+
+                    }
                     List<String> termsPeKgram = kgramIndex.get(kgram);
                     //Writing current stream location to output list and dictionary of kgram to address
                     locations.add((long) outputStream.size());
@@ -111,7 +117,10 @@ public class DiskIndexWriter {
                    // <#_of_termsPerkgram  <length_of_term  term>>
                     //Writing Number of terms for given kgram
                     outputStream.writeInt(termsPeKgram.size());
+
                     for (String term : termsPeKgram) {
+
+
                         byte arr[]=kgram.getBytes("UTF8");
                         //Writing size of term;
                         outputStream.writeInt(arr.length);

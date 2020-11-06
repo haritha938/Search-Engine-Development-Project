@@ -37,16 +37,7 @@ public class RankedQueryParser {
                     ? tokenProcessor.processToken(searchToken.replaceAll("-", "")).get(0)
                     : tokenProcessor.processToken(searchToken).get(0);
             List<Posting> postingList=null;
-            if(!searchTerm.contains("*")) {
-                postingList = diskIndex.getPostingsWithOutPositions(searchTerm);
-            }
-            else
-            {
-               // Query q= new WildcardLiteral(searchTerm,tokenProcessor,false);
-                //q.getPostings()
-                 //postingList=q.getPostings()
 
-            }
             if(postingList!=null) {
                 double wqt = Math.log(1 + (((double) sizeOfCorpus) / postingList.size()));
                 for (Posting posting : postingList) {

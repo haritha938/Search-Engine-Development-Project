@@ -74,4 +74,8 @@ public class TermDocumentIndex implements Index {
 	public Map<String, List<Posting>> getIndex() {
 		return null;
 	}
+
+
+
+
 }
