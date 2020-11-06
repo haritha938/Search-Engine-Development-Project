@@ -1,5 +1,6 @@
 package cecs429.index;
 
+import cecs429.tolerantRetrieval.KGram;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -76,6 +77,58 @@ public class DiskIndexWriter {
             db.close();
         }
         return locations;
+    }
+//haritha-->WriteKgramIndex()
+
+    public List<Long> writeKgramIndex(Map<String,List<String>> kgramIndex)
+    {
+        List<Long> locations = new LinkedList<>();
+        File kgramsFile = new File(path,"kgrams.bin");
+        File mapDBFile = new File(path,"kgrams.db");
+        kgramsFile.getParentFile().mkdirs();
+        if(kgramsFile.exists()) {
+            kgramsFile.delete();
+            mapDBFile.delete();
+        }
+      //  Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
+        List<String> sortedKgrams = new ArrayList<>(kgramIndex.keySet());
+        Collections.sort(sortedKgrams);
+        try (DB db = DBMaker
+                .fileDB(path + File.separator + "kgrams.db")
+                .fileMmapEnable()
+                .make()) {
+            ConcurrentMap<String, Long> diskIndex = db
+                    .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .create();
+
+            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(kgramsFile))) {
+                kgramsFile.createNewFile();
+                for (String kgram : sortedKgrams) {
+                    List<String> termsPeKgram = kgramIndex.get(kgram);
+                    //Writing current stream location to output list and dictionary of kgram to address
+                    locations.add((long) outputStream.size());
+                    diskIndex.put(kgram, (long) outputStream.size());
+                   // <#_of_termsPerkgram  <length_of_term  term>>
+                    //Writing Number of terms for given kgram
+                    outputStream.writeInt(termsPeKgram.size());
+                    for (String term : termsPeKgram) {
+                        byte arr[]=kgram.getBytes("UTF8");
+                        //Writing size of term;
+                        outputStream.writeInt(arr.length);
+
+                            //Writing term in bytes;
+                            outputStream.writeUTF(term);
+
+
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            db.close();
+        }
+        return locations;
+
     }
 
     public List<Long> writeSoundexIndex(SoundexIndex soundexindex){

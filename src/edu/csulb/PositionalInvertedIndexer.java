@@ -360,9 +360,11 @@ public class PositionalInvertedIndexer  {
 		SoundexIndex soundexindex=getSoundexIndex();
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
 		List<Long> soundexAddresses=  diskIndexWriter.writeSoundexIndex(soundexindex);
-
+        //haritha-->create kgramAddress
 
 		index.generateKGrams(3);
+		Map<String,List<String>> kgramIndex=index.getKGrams();
+		List<Long> kgramAddress=  diskIndexWriter.writeKgramIndex(kgramIndex);
 		long endTime=System.nanoTime();
 		System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
 		return corpus;
