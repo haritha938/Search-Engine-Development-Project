@@ -37,6 +37,9 @@ public interface Index {
 	/**
 	 * Retrieves the InvertedIndex
 	 */
+	//Map<String,List<Posting>> getIndex(String type);
 	Map<String,List<Posting>> getIndex();
+
+
 
 }
