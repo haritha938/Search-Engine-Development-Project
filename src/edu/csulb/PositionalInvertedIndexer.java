@@ -14,6 +14,7 @@ import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class PositionalInvertedIndexer  {
 	// Creating a soundexIndex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
 	static DiskIndexWriter diskIndexWriter=null;
+	static Map<String,List<String>> kgramIndex=new HashMap<>();
 	static DocumentCorpus corpus;
 	static Index index;
 	static BufferedReader reader;
@@ -33,8 +35,7 @@ public class PositionalInvertedIndexer  {
 	static int limit = 5;
 	static Path path;
 	static DiskPositionalIndex diskPositionalIndex;
-	//static SoundexIndexWriter sIndexWriter=null;
-	//static SoundexDiskReader soundexdiskreader=null;
+
 
 	public static void main(String[] args) {
 		//PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
@@ -47,10 +48,15 @@ public class PositionalInvertedIndexer  {
 			System.out.println("Would you like to create an Index or run the queries? Enter \"Y\" to create an index and \"N\" to run queries ");
 			String programMode = reader.readLine();
 			if(programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
+
 				chooseTokenProcessor();
 				createIndex(path);
 			}
-			diskPositionalIndex = new DiskPositionalIndex(path.toString()+ File.separator+"index");
+
+				diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+				diskPositionalIndex.generateKGrams(3);
+                kgramIndex=diskPositionalIndex.getKGrams();
+
 			//soundexdiskreader=new SoundexDiskReader(path.toString()+File.separator+"index");
 
 			System.out.println("Entering query mode");
@@ -318,7 +324,7 @@ public class PositionalInvertedIndexer  {
 	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
 	{
 		BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);
-		Query queryobject = booleanQueryParser.parseQuery(query.trim());
+		Query queryobject = booleanQueryParser.parseQuery(query.trim().toLowerCase());
 		List<Posting> resultList = null;
 		if (queryobject != null) {
 			resultList = queryobject.getPostings(index);

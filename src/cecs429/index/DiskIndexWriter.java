@@ -108,7 +108,6 @@ public class DiskIndexWriter {
                     if(kgram.equals("$"))
                     {
                         continue;
-
                     }
                     List<String> termsPeKgram = kgramIndex.get(kgram);
                     //Writing current stream location to output list and dictionary of kgram to address
@@ -117,18 +116,11 @@ public class DiskIndexWriter {
                    // <#_of_termsPerkgram  <length_of_term  term>>
                     //Writing Number of terms for given kgram
                     outputStream.writeInt(termsPeKgram.size());
-
                     for (String term : termsPeKgram) {
-
-
-                        byte arr[]=kgram.getBytes("UTF8");
+                        byte arr[]=term.getBytes("UTF8");
                         //Writing size of term;
                         outputStream.writeInt(arr.length);
-
-                            //Writing term in bytes;
-                            outputStream.writeUTF(term);
-
-
+                            outputStream.write(arr);
                     }
                 }
             } catch (IOException e) {
