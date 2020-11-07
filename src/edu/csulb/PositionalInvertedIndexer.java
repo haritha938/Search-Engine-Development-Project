@@ -14,6 +14,7 @@ import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class PositionalInvertedIndexer  {
 	// Creating a soundexIndex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
 	static DiskIndexWriter diskIndexWriter=null;
+	static Map<String,List<String>> kgramIndex=new HashMap<>();
 	static DocumentCorpus corpus;
 	static Index index;
 	static BufferedReader reader;
@@ -33,8 +35,7 @@ public class PositionalInvertedIndexer  {
 	static int limit = 5;
 	static Path path;
 	static DiskPositionalIndex diskPositionalIndex;
-	//static SoundexIndexWriter sIndexWriter=null;
-	//static SoundexDiskReader soundexdiskreader=null;
+
 
 	public static void main(String[] args) {
 		//PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
@@ -53,7 +54,9 @@ public class PositionalInvertedIndexer  {
 			else{
 				tokenProcessor=new AdvanceTokenProcessor();
 			}
-			diskPositionalIndex = new DiskPositionalIndex(path.toString()+ File.separator+"index");
+			diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+			diskPositionalIndex.generateKGrams(3);
+			kgramIndex=diskPositionalIndex.getKGrams();
 			//soundexdiskreader=new SoundexDiskReader(path.toString()+File.separator+"index");
 
 			System.out.println("Entering query mode");
@@ -351,7 +354,7 @@ public class PositionalInvertedIndexer  {
 	public static List<Posting> getSoundexDiskIndexPostings(String query,DiskPositionalIndex index,TokenProcessor tokenprocessor){
 		List<Posting> resultPostings=index.getSoundexPostings(tokenprocessor.processToken(query).get(0));
 		if(resultPostings!=null)
-				return resultPostings;
+			return resultPostings;
 		return null;
 	}
 	public static DocumentCorpus createIndex(Path path){
@@ -363,7 +366,7 @@ public class PositionalInvertedIndexer  {
 		SoundexIndex soundexindex=getSoundexIndex();
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
 		List<Long> soundexAddresses=  diskIndexWriter.writeSoundexIndex(soundexindex);
-        //haritha-->create kgramAddress
+		//haritha-->create kgramAddress
 
 		index.generateKGrams(3);
 		Map<String,List<String>> kgramIndex=index.getKGrams();

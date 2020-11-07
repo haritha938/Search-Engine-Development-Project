@@ -33,20 +33,23 @@ public class RankedQueryParser {
         Map<Integer,Accumulator> documentAccumulatorMap = new HashMap<>();
         String[] queryTerms=query.split(" +");
         for(String searchToken:queryTerms){
-            String searchTerm = (searchToken.contains("-"))
-                    ? tokenProcessor.processToken(searchToken.replaceAll("-", "")).get(0)
-                    : tokenProcessor.processToken(searchToken).get(0);
             List<Posting> postingList=null;
-            if(!searchTerm.contains("*")) {
+            if(!searchToken.contains("*")) {
+                String searchTerm = (searchToken.contains("-"))
+                        ? tokenProcessor.processToken(searchToken.replaceAll("-", "")).get(0)
+                        : tokenProcessor.processToken(searchToken).get(0);
+
                 postingList = diskIndex.getPostingsWithOutPositions(searchTerm);
             }
             else
             {
-               // Query q= new WildcardLiteral(searchTerm,tokenProcessor,false);
-                //q.getPostings()
-                 //postingList=q.getPostings()
-
+                String searchTerm = (searchToken.contains("-"))
+                        ? searchToken.replaceAll("-", "").trim()
+                        : searchToken.trim();
+                Query q= new WildcardLiteral(searchTerm.trim(),tokenProcessor,false);
+                postingList=q.getPostings(diskIndex);
             }
+
             if(postingList!=null) {
                 double wqt = Math.log(1 + (((double) sizeOfCorpus) / postingList.size()));
                 for (Posting posting : postingList) {
