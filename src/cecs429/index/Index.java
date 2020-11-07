@@ -39,6 +39,9 @@ public interface Index {
 	 */
 	//Map<String,List<Posting>> getIndex(String type);
 	Map<String,List<Posting>> getIndex();
+//Todo: Instead of getIndex  use getTerms In entire code
+	//List<String> getTerms();
+
 
 
 
