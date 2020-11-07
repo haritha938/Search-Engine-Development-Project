@@ -41,9 +41,9 @@ public class DiskIndexWriter {
                 .fileDB(path + File.separator + "positionalIndex.db")
                 .fileMmapEnable()
                 .make()) {
-                ConcurrentMap<String, Long> diskIndex = db
-                        .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                        .create();
+            ConcurrentMap<String, Long> diskIndex = db
+                    .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .create();
 
             try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
                 postingsFile.createNewFile();
@@ -90,7 +90,7 @@ public class DiskIndexWriter {
             kgramsFile.delete();
             mapDBFile.delete();
         }
-      //  Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
+        //  Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
         List<String> sortedKgrams = new ArrayList<>(kgramIndex.keySet());
         Collections.sort(sortedKgrams);
         try (DB db = DBMaker
@@ -108,19 +108,27 @@ public class DiskIndexWriter {
                     if(kgram.equals("$"))
                     {
                         continue;
+
                     }
                     List<String> termsPeKgram = kgramIndex.get(kgram);
                     //Writing current stream location to output list and dictionary of kgram to address
                     locations.add((long) outputStream.size());
                     diskIndex.put(kgram, (long) outputStream.size());
-                   // <#_of_termsPerkgram  <length_of_term  term>>
+                    // <#_of_termsPerkgram  <length_of_term  term>>
                     //Writing Number of terms for given kgram
                     outputStream.writeInt(termsPeKgram.size());
+
                     for (String term : termsPeKgram) {
+
+
                         byte arr[]=term.getBytes("UTF8");
                         //Writing size of term;
                         outputStream.writeInt(arr.length);
-                            outputStream.write(arr);
+
+                        outputStream.write(arr);
+
+
+
                     }
                 }
             } catch (IOException e) {

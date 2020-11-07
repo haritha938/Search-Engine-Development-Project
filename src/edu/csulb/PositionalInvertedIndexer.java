@@ -354,7 +354,7 @@ public class PositionalInvertedIndexer  {
 	public static List<Posting> getSoundexDiskIndexPostings(String query,DiskPositionalIndex index,TokenProcessor tokenprocessor){
 		List<Posting> resultPostings=index.getSoundexPostings(tokenprocessor.processToken(query).get(0));
 		if(resultPostings!=null)
-				return resultPostings;
+			return resultPostings;
 		return null;
 	}
 	public static DocumentCorpus createIndex(Path path){
@@ -366,7 +366,7 @@ public class PositionalInvertedIndexer  {
 		SoundexIndex soundexindex=getSoundexIndex();
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
 		List<Long> soundexAddresses=  diskIndexWriter.writeSoundexIndex(soundexindex);
-        //haritha-->create kgramAddress
+		//haritha-->create kgramAddress
 
 		index.generateKGrams(3);
 		Map<String,List<String>> kgramIndex=index.getKGrams();

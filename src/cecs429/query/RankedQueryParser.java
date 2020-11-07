@@ -35,9 +35,9 @@ public class RankedQueryParser {
         for(String searchToken:queryTerms){
             List<Posting> postingList=null;
             if(!searchToken.contains("*")) {
-            String searchTerm = (searchToken.contains("-"))
-                    ? tokenProcessor.processToken(searchToken.replaceAll("-", "")).get(0)
-                    : tokenProcessor.processToken(searchToken).get(0);
+                String searchTerm = (searchToken.contains("-"))
+                        ? tokenProcessor.processToken(searchToken.replaceAll("-", "")).get(0)
+                        : tokenProcessor.processToken(searchToken).get(0);
 
                 postingList = diskIndex.getPostingsWithOutPositions(searchTerm);
             }
