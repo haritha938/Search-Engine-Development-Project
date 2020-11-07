@@ -81,9 +81,12 @@ public class PositionalInvertedIndex implements Index {
 
     @Override
     public Map<String, List<Posting>> getIndex() {
-
             return mIndex;
+    }
 
+    @Override
+    public List<String> getTerms() {
+        return new ArrayList<>(mIndex.keySet());
     }
 
 

@@ -75,7 +75,8 @@ public class TermDocumentIndex implements Index {
 		return null;
 	}
 
-
-
-
+	@Override
+	public List<String> getTerms() {
+		return null;
+	}
 }
