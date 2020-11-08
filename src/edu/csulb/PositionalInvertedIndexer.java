@@ -5,22 +5,15 @@ import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.JsonFileDocument;
 import cecs429.index.*;
-import cecs429.query.Accumulator;
-import cecs429.query.BooleanQueryParser;
-import cecs429.query.Query;
-import cecs429.query.RankedQueryParser;
+import cecs429.query.*;
 import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
@@ -32,7 +25,7 @@ public class PositionalInvertedIndexer  {
 	static Index index;
 	static BufferedReader reader;
 	static int corpusSize;
-	static int limit = 5;
+	static int limit = 10;
 	static Path path;
 	static DiskPositionalIndex diskPositionalIndex;
 
@@ -192,13 +185,16 @@ public class PositionalInvertedIndexer  {
 							has to be created to store token processor chosen.
 						 */
 						tokenProcessor = new AdvanceTokenProcessor();
-						List<Accumulator> rankedQueries = getRankedPostings(query,diskPositionalIndex,tokenProcessor);
+						SearchResult searchResult = getRankedPostings(query,diskPositionalIndex,tokenProcessor);
+						List<Accumulator> rankedQueries = searchResult.getSearchResults();
 						if (rankedQueries != null && rankedQueries.size() != 0) {
 							for (Accumulator accumulator : rankedQueries) {
 								Document document = corpus.getDocument(accumulator.getDocumentId());
 								System.out.println(document.getTitle() + " (\"" + document.getDocumentName() + "\") Calculated Accumulator value: " + accumulator.getPriority());
 							}
 							System.out.println("Total number of documents fetched: " + rankedQueries.size());
+							//TODO: Add prompt as y/n to search directly with corrected spelling
+							System.out.println("Would you like to search with following query for better result:" + searchResult.getSuggestedString());
 							while (true) {
 								System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
 								documentName = reader.readLine();
@@ -235,6 +231,7 @@ public class PositionalInvertedIndexer  {
 							}
 						} else {
 							System.out.println("No such text can be found in the Corpus!");
+							System.out.println("Would you like to search with following query for better result:" + searchResult.getSuggestedString());
 						}
 					}
 				}
@@ -258,17 +255,18 @@ public class PositionalInvertedIndexer  {
 		Map<String,Integer> termToFreq = new HashMap<>();
 		List<Double> lengthOfDocuments = new ArrayList<>();
 		List<String> tokensList=new ArrayList<>();
+		List<Double> weightOfDocuments = new ArrayList<>();
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
-			//add tokens to diskIndex vocabulary
-
 			int i=1;
 			for(String string: strings){
+				//add tokens to diskIndex vocabulary
 				tokensList.add(string.trim());
 				for(String term:tokenProcessor.processToken(string)) {
-					if(!term.isEmpty())
+					if(!term.isEmpty()) {
 						index.addTerm(term, document.getId(), i);
+					}
 				}
 				i++;
 				if(string.contains("-")){
@@ -291,7 +289,7 @@ public class PositionalInvertedIndexer  {
 			for(String termKey:termToFreq.keySet()){
 				wdt+=Math.pow(1+Math.log(termToFreq.get(termKey)),2);
 			}
-			lengthOfDocuments.add(Math.sqrt(wdt));
+			weightOfDocuments.add(Math.sqrt(wdt));
 			termToFreq.clear();
 			try {
 				englishTokenStream.close();
@@ -318,7 +316,7 @@ public class PositionalInvertedIndexer  {
 			}
 		}
 		diskIndexWriter.addtoVocb(tokensList);
-		diskIndexWriter.writeLengthOfDocument(lengthOfDocuments);
+		diskIndexWriter.writeWeightOfDocuments(weightOfDocuments);
 		return index;
 	}
 
@@ -337,13 +335,13 @@ public class PositionalInvertedIndexer  {
 		return resultList;
 	}
 
-	public static List<Accumulator> getRankedPostings(String query,Index index,TokenProcessor tokenProcessor){
+	public static SearchResult getRankedPostings(String query,Index index,TokenProcessor tokenProcessor){
 		RankedQueryParser rankedQueryParser = new RankedQueryParser(index
 				,corpusSize
 				,path.toString()+File.separator+"index"
 				,limit
 				,tokenProcessor);
-		List<Accumulator> searchResult = rankedQueryParser.getPostings(query);
+		SearchResult searchResult = rankedQueryParser.getPostings(query);
 		return  searchResult;
 	}
 
@@ -371,7 +369,6 @@ public class PositionalInvertedIndexer  {
 		SoundexIndex soundexindex=getSoundexIndex();
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
 		List<Long> soundexAddresses=  diskIndexWriter.writeSoundexIndex(soundexindex);
-		//haritha-->create kgramAddress
 
 		index.generateKGrams(3);
 		Map<String,List<String>> kgramIndex=index.getKGrams();

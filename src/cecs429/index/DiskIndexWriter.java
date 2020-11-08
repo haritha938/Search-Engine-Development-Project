@@ -1,6 +1,5 @@
 package cecs429.index;
 
-import cecs429.tolerantRetrieval.KGram;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -15,10 +14,8 @@ import java.util.concurrent.ConcurrentMap;
 public class DiskIndexWriter {
 
     String path;
-
     public DiskIndexWriter(String path){
         this.path = path;
-
     }
 
     /**
@@ -33,10 +30,11 @@ public class DiskIndexWriter {
         File postingsFile = new File(path,"Postings.bin");
         File mapDBFile = new File(path,"positionalIndex.db");
         postingsFile.getParentFile().mkdirs();
-        if(postingsFile.exists()) {
+        if(postingsFile.exists())
             postingsFile.delete();
+        if(mapDBFile.exists())
             mapDBFile.delete();
-        }
+
         if(termsFile.exists()) {
             termsFile.delete();
         }
@@ -63,7 +61,6 @@ public class DiskIndexWriter {
                     //Writing current stream location to output list and dictionary of term to address
                     locations.add((long) outputStream.size());
                     diskIndex.put(term, (long) outputStream.size());
-
                     //Convert term to bytes
                     byte arr[]=term.getBytes("UTF8");
                     //write size of term
@@ -111,7 +108,6 @@ public class DiskIndexWriter {
             kgramsFile.delete();
             mapDBFile.delete();
         }
-        //  Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
         List<String> sortedKgrams = new ArrayList<>(kgramIndex.keySet());
         Collections.sort(sortedKgrams);
         try (DB db = DBMaker
@@ -150,10 +146,8 @@ public class DiskIndexWriter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
         return locations;
-
     }
 
     public List<Long> writeSoundexIndex(SoundexIndex soundexindex){
@@ -171,25 +165,20 @@ public class DiskIndexWriter {
         try(DB db= DBMaker.fileDB(path + File.separator + "soundexPositions.db").fileMmapEnable().make()) {
             ConcurrentMap<String, Long> diskIndex = db.hashMap("address", Serializer.STRING, Serializer.LONG).create();
 
-            try (DataOutputStream outputstream = new DataOutputStream(new FileOutputStream(postingsFile))) {
+            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
                 postingsFile.createNewFile();
                 for (String term : sortedTerms) {
                     List<Posting> postingList = soundexPostingsIndex.get(term);
-                    locations.add((long) outputstream.size());
-                    diskIndex.put(term,(long)outputstream.size());
-                    outputstream.writeInt(postingList.size());
+                    locations.add((long) outputStream.size());
+                    diskIndex.put(term,(long)outputStream.size());
+                    outputStream.writeInt(postingList.size());
                     int previousDocId=0;
                     for(Posting posting: postingList){
-                        outputstream.writeInt(posting.getDocumentId()-previousDocId);
+                        outputStream.writeInt(posting.getDocumentId()-previousDocId);
                         previousDocId=posting.getDocumentId();
-
                     }
                 }
-
             }
-            db.close();
-        }catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -200,7 +189,7 @@ public class DiskIndexWriter {
      * Writes
      * @param lengths of documents to docWeights.bin file
      */
-    public void writeLengthOfDocument(List<Double> lengths){
+    public void writeWeightOfDocuments(List<Double> lengths){
         File file = new File(path,"docWeights.bin");
         file.getParentFile().mkdirs();
         try {

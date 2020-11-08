@@ -21,6 +21,12 @@ public class Posting {
 		this.mPositionsList = positionList;
 	}
 
+	public Posting(int documentId,List<Integer> positionList,double wdt){
+		this.mDocumentId = documentId;
+		this.mPositionsList = positionList;
+		this.wdt = wdt;
+	}
+
 	public Posting(int mDocumentId, double wdt, int tftd) {
 		this.mDocumentId = mDocumentId;
 		this.wdt = wdt;
@@ -51,6 +57,10 @@ public class Posting {
 
 	public double getWdt() {
 		return wdt;
+	}
+
+	public void setWdt(double wdt) {
+		this.wdt = wdt;
 	}
 
 	@Override
