@@ -2,6 +2,7 @@ package test;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
+import cecs429.index.DiskPositionalIndex;
 import cecs429.index.Index;
 import cecs429.index.Posting;
 import cecs429.text.AdvanceTokenProcessor;
@@ -40,6 +41,7 @@ public class IndexTest {
             Method method = PositionalInvertedIndexer.class.getDeclaredMethod("indexCorpus", arg);
             method.setAccessible(true);
             testIndex = (Index) method.invoke(PositionalInvertedIndexer.class,corpus,  new AdvanceTokenProcessor());
+            //testIndex = (Index) method.invoke(DiskPositionalIndex.class,corpus,  new AdvanceTokenProcessor());
         }
         catch ( NoSuchMethodException e)
         {
@@ -144,17 +146,17 @@ public class IndexTest {
     public void TestIndex()
     {
         //check if the size of the expectedIndex matches with the actualIndex(testIndex)
-        Assert.assertTrue("Index size do not match", expectedIndex.size()== testIndex.getIndex().size());
+        Assert.assertTrue("Index size do not match", expectedIndex.size()== testIndex.getTerms().size());
         int expectedIndexSize= expectedIndex.size();
-        int actualIndexSize= testIndex.getIndex().size();
+        int actualIndexSize= testIndex.getTerms().size();
 
         if(expectedIndexSize==actualIndexSize) {
             //check if the keys of the expectedIndex matches with the actualIndex(testIndex)
-            Assert.assertTrue("Keys not equal", expectedIndex.keySet().equals(testIndex.getIndex().keySet()));
+            Assert.assertTrue("Keys not equal", expectedIndex.keySet().equals(testIndex.getTerms()));
             for(String key: expectedIndex.keySet())
             {
                 //Displayed the key for the mismatched values in  expectedIndex and testIndex
-                Assert.assertEquals("Mismatch at Index key,"+key, expectedIndex.get(key), testIndex.getIndex().get(key));
+                Assert.assertEquals("Mismatch at Index key,"+key, expectedIndex.get(key), testIndex.getPostingsWithOutPositions(key));
 
             }
         }

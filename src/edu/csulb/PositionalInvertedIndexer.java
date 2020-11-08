@@ -257,11 +257,15 @@ public class PositionalInvertedIndexer  {
 		JsonFileDocument file;
 		Map<String,Integer> termToFreq = new HashMap<>();
 		List<Double> lengthOfDocuments = new ArrayList<>();
+		List<String> tokensList=new ArrayList<>();
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
+			//add tokens to diskIndex vocabulary
+
 			int i=1;
 			for(String string: strings){
+				tokensList.add(string.trim());
 				for(String term:tokenProcessor.processToken(string)) {
 					if(!term.isEmpty())
 						index.addTerm(term, document.getId(), i);
@@ -313,6 +317,7 @@ public class PositionalInvertedIndexer  {
 				}
 			}
 		}
+		diskIndexWriter.addtoVocb(tokensList);
 		diskIndexWriter.writeLengthOfDocument(lengthOfDocuments);
 		return index;
 	}
