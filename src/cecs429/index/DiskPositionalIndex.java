@@ -264,7 +264,7 @@ public class DiskPositionalIndex implements Index{
                 .fileDB(path+File.separator+"soundexPositions.db")
                 .fileMmapEnable()
                 .make();
-        sdiskIndex = soundexDb
+        ConcurrentMap<String, Long> sdiskIndex = soundexDb
                 .hashMap("address", Serializer.STRING, Serializer.LONG)
                 .open();
         File soundexFile = new File(path,"SoundexPostings.bin");
