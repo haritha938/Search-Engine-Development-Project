@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Reads data from disk
  */
-public class DiskPositionalIndex implements Index {
+public class DiskPositionalIndex implements Index{
     static String path;
     DB soundexDb;
     ConcurrentMap<String, Long> sdiskIndex;
@@ -25,34 +25,17 @@ public class DiskPositionalIndex implements Index {
     DB db;
     ConcurrentMap<String, Long> diskIndex;
     File file;
-    Map<String, List<String>> kgramIndex = new HashMap<>();
+    File vocabFile;
+    Map<String,List<String>> kgramIndex=new HashMap<>();
 
-    public DiskPositionalIndex(String path) {
+    public DiskPositionalIndex(String path){
         this.path = path;
-        soundexDb = DBMaker
-                .fileDB(path + File.separator + "soundexPositions.db")
-                .fileMmapEnable()
-                .make();
-        sdiskIndex = soundexDb
-                .hashMap("address", Serializer.STRING, Serializer.LONG)
-                .open();
-        soundexFile = new File(path, "SoundexPostings.bin");
-        kgramDb = DBMaker
-                .fileDB(path + File.separator + "kgrams.db")
-                .fileMmapEnable()
-                .make();
-        kgramDiskIndex = kgramDb
-                .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                .open();
-        kgramFile = new File(path, "kgrams.bin");
-
         db = DBMaker
                 .fileDB(path + File.separator + "positionalIndex.db")
                 .fileMmapEnable()
                 .make();
         diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                 .open();
-
         file = new File(path, "Postings.bin");
     }
 
@@ -76,9 +59,10 @@ public class DiskPositionalIndex implements Index {
         }
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
-            if (!diskIndex.containsKey(term)) {
+
+            if (diskIndex.get(term) == null)
                 return null;
-            }
+
             long address = diskIndex.get(term);
             randomAccessFile.seek(address);
             byte[] readIntBuffer = new byte[4];
@@ -124,7 +108,9 @@ public class DiskPositionalIndex implements Index {
      */
     @Override
     public List<Posting> getPostingsWithOutPositions(String term) {
-        if (db.isClosed()) {
+        if(db.isClosed())
+        {
+
             db = DBMaker
                     .fileDB(path + File.separator + "positionalIndex.db")
                     .fileMmapEnable()
@@ -168,7 +154,32 @@ public class DiskPositionalIndex implements Index {
 
     @Override
     public List<String> getVocabulary() {
-        return null;
+        List<String> tokensList=new ArrayList<>();
+
+        vocabFile = new File(path, "vocabulary.bin");
+        String token=null;
+        try {
+            DataInputStream dataInputStream=new DataInputStream(new FileInputStream(vocabFile));
+            while (dataInputStream.available()>0) {
+                byte[] readIntBuffer = new byte[4];
+                //read token length
+                dataInputStream.read(readIntBuffer, 0, readIntBuffer.length);
+                int termLength = ByteBuffer.wrap(readIntBuffer).getInt();
+                byte[] readCharBuffer = new byte[termLength];
+                //read token in bytes
+                dataInputStream.read(readCharBuffer, 0, readCharBuffer.length);
+                token = new String(readCharBuffer, StandardCharsets.UTF_8);
+                tokensList.add(token);
+            }
+        }
+        catch (FileNotFoundException ex)
+        {
+            ex.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return tokensList;
     }
 
     @Override
@@ -179,11 +190,9 @@ public class DiskPositionalIndex implements Index {
 
     @Override
     public void generateKGrams(int kGramSize) {
-
-
         //Todo: from db to create hash map Index-> as class variable
 
-        if (kgramDb.isClosed()) {
+
             kgramDb = DBMaker
                     .fileDB(path + File.separator + "kgrams.db")
                     .fileMmapEnable()
@@ -193,14 +202,13 @@ public class DiskPositionalIndex implements Index {
                     .open();
 
             kgramFile = new File(path, "kgrams.bin");
-        }
-        kgramFile = new File(path, "kgrams.bin");
-        String kgram = null;
+
+        String kgram;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(kgramFile, "r")) {
 
-            Iterator<String> iterator = kgramDiskIndex.keySet().iterator();
+            Iterator<String> iterator=kgramDiskIndex.keySet().iterator();
             while (iterator.hasNext()) {
-                kgram = iterator.next();
+                kgram=iterator.next();
 
                 long address = kgramDiskIndex.get(kgram);
                 randomAccessFile.seek(address);
@@ -216,7 +224,8 @@ public class DiskPositionalIndex implements Index {
                     String kgramString = new String(readCharBuffer, StandardCharsets.UTF_8);
                     listOfTerms.add(kgramString);
                 }
-                kgramIndex.put(kgram, listOfTerms);
+                kgramIndex.put(kgram,listOfTerms);
+
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -224,20 +233,49 @@ public class DiskPositionalIndex implements Index {
             e.printStackTrace();
         }
         kgramDb.close();
-    }
 
-    @Override
-    public Map<String, List<Posting>> getIndex() {
-        return null;
     }
 
     @Override
     public List<String> getTerms() {
-        return null;
+        List<String> termsList=new ArrayList<>();
+        vocabFile = new File(path, "terms.bin");
+        String term;
+
+        try {
+            DataInputStream dataInputStream=new DataInputStream(new FileInputStream(vocabFile));
+            while (dataInputStream.available()>0) {
+                byte[] readIntBuffer = new byte[4];
+                //read term length
+                dataInputStream.read(readIntBuffer, 0, readIntBuffer.length);
+                int termLength = ByteBuffer.wrap(readIntBuffer).getInt();
+                byte[] readCharBuffer = new byte[termLength];
+                //read term in bytes
+                dataInputStream.read(readCharBuffer, 0, readCharBuffer.length);
+                term = new String(readCharBuffer, StandardCharsets.UTF_8);
+                termsList.add(term);
+            }
+            }
+        catch (FileNotFoundException ex)
+        {
+            ex.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return termsList;
     }
 
 
-    public List<Posting> getSoundexPostings(String term) {
+    public List<Posting> getSoundexPostings(String term){
+        soundexDb = DBMaker
+                .fileDB(path+File.separator+"soundexPositions.db")
+                .fileMmapEnable()
+                .make();
+        sdiskIndex = soundexDb
+                .hashMap("address", Serializer.STRING, Serializer.LONG)
+                .open();
+        soundexFile = new File(path,"SoundexPostings.bin");
 
         List<Posting> postingList = null;
 

@@ -26,6 +26,7 @@ public class DiskIndexWriter {
      */
     public List<Long> writeIndex(Index index){
         List<Long> locations = new LinkedList<>();
+        File termsFile = new File(path,"terms.bin");
         File postingsFile = new File(path,"Postings.bin");
         File mapDBFile = new File(path,"positionalIndex.db");
         postingsFile.getParentFile().mkdirs();
@@ -33,24 +34,39 @@ public class DiskIndexWriter {
             postingsFile.delete();
         if(mapDBFile.exists())
             mapDBFile.delete();
-        Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
-        List<String> sortedTerms = new ArrayList<>(index.getIndex().keySet());
+
+        if(termsFile.exists()) {
+            termsFile.delete();
+        }
+
+        List<String> sortedTerms = new ArrayList<>(index.getTerms());
         Collections.sort(sortedTerms);
         try (DB db = DBMaker
                 .fileDB(path + File.separator + "positionalIndex.db")
                 .fileMmapEnable()
                 .make()) {
-                ConcurrentMap<String, Long> diskIndex = db
-                        .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                        .create();
+            ConcurrentMap<String, Long> diskIndex = db
+                    .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .create();
 
-            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
+            DataOutputStream outputStream;
+            DataOutputStream outputStreamForTerms;
+            try{
+                outputStream = new DataOutputStream(new FileOutputStream(postingsFile));
                 postingsFile.createNewFile();
+                outputStreamForTerms = new DataOutputStream(new FileOutputStream(termsFile));
+                termsFile.createNewFile();
                 for (String term : sortedTerms) {
-                    List<Posting> postingList = positionalInvertedIndex.get(term);
+                    List<Posting> postingList = index.getPostingsWithPositions(term);
                     //Writing current stream location to output list and dictionary of term to address
                     locations.add((long) outputStream.size());
                     diskIndex.put(term, (long) outputStream.size());
+                    //Convert term to bytes
+                    byte arr[]=term.getBytes("UTF8");
+                    //write size of term
+                    outputStreamForTerms.writeInt(arr.length);
+                    //Writing term to terms.bin;
+                    outputStreamForTerms.write(arr);
                     //Writing Number of postings for given term; dft
                     outputStream.writeInt(postingList.size());
                     int previousDocID = 0;
@@ -70,12 +86,17 @@ public class DiskIndexWriter {
                         }
                     }
                 }
+                outputStream.close();
+                outputStreamForTerms.close();
+                db.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }
         return locations;
     }
+
 
     public List<Long> writeKgramIndex(Map<String,List<String>> kgramIndex)
     {
@@ -87,7 +108,6 @@ public class DiskIndexWriter {
             kgramsFile.delete();
             mapDBFile.delete();
         }
-      //  Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
         List<String> sortedKgrams = new ArrayList<>(kgramIndex.keySet());
         Collections.sort(sortedKgrams);
         try (DB db = DBMaker
@@ -97,8 +117,9 @@ public class DiskIndexWriter {
             ConcurrentMap<String, Long> diskIndex = db
                     .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .create();
-
-            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(kgramsFile))) {
+            DataOutputStream outputStream;
+            try {
+                outputStream = new DataOutputStream(new FileOutputStream(kgramsFile));
                 kgramsFile.createNewFile();
                 for (String kgram : sortedKgrams) {
                     //Todo: This needs to be corrected.
@@ -110,22 +131,23 @@ public class DiskIndexWriter {
                     //Writing current stream location to output list and dictionary of kgram to address
                     locations.add((long) outputStream.size());
                     diskIndex.put(kgram, (long) outputStream.size());
-                   // <#_of_termsPerkgram  <length_of_term  term>>
+                    // <#_of_termsPerkgram  <length_of_term  term>>
                     //Writing Number of terms for given kgram
                     outputStream.writeInt(termsPeKgram.size());
                     for (String term : termsPeKgram) {
                         byte arr[]=term.getBytes("UTF8");
                         //Writing size of term;
                         outputStream.writeInt(arr.length);
-                            outputStream.write(arr);
+                        outputStream.write(arr);
                     }
                 }
+                outputStream.close();
+                db.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         return locations;
-
     }
 
     public List<Long> writeSoundexIndex(SoundexIndex soundexindex){
@@ -180,6 +202,30 @@ public class DiskIndexWriter {
                 outputStream.writeDouble(length);
             }
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addtoVocb(List<String> vocabList)
+    {
+        try {
+            File vocabFile=new File(path,"vocabulary.bin");
+            DataOutputStream vocabOutputStream=new DataOutputStream(new FileOutputStream(vocabFile));
+
+            for(String token:vocabList)
+            {
+                //Convert token to bytes
+                byte arr[] = token.trim().getBytes("UTF8");
+                //write size of token
+                vocabOutputStream.writeInt(arr.length);
+                //Writing token to vocabulary.bin;
+                vocabOutputStream.write(arr);
+            }
+            vocabOutputStream.close();
+        }catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -38,7 +38,7 @@ public interface Index {
 	 * Retrieves the InvertedIndex
 	 */
 	//Map<String,List<Posting>> getIndex(String type);
-	Map<String,List<Posting>> getIndex();
+	//Map<String,List<Posting>> getIndex();
 //Todo: Instead of getIndex  use getTerms In entire code
 	List<String> getTerms();
 
