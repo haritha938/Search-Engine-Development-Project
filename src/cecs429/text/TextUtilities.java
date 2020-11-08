@@ -16,7 +16,7 @@ public class TextUtilities {
      * @param possibleStrings are the list of strings that consist the k-grams of @param source
      * and the Jaccard coefficient value greater than threshold
      */
-    public List<String> editDistance(String source, Set<String> possibleStrings){
+    public List<String> editDistance(String source, List<String> possibleStrings){
         List<String> suggestions = new ArrayList<>();
         int minDistance = Integer.MAX_VALUE;
         for(String token:possibleStrings){
@@ -74,24 +74,32 @@ public class TextUtilities {
      */
     public String getSuggestion(String word, Index index){
         String suggestion=word;
-        Set<String> commonStrings = new HashSet<>();
-        List<String> stringList =getKGrams(word)  ;
+        List<String> commonStringsList = new ArrayList<>();
+        List<String> stringList = getKGrams(word);
         for(String s:stringList){
-            if(index.getKGrams().containsKey(s))
-                commonStrings.addAll(index.getKGrams().get(s));
+            if(index.getKGrams().containsKey(s)) {
+                if(commonStringsList.size() == 0) {
+                    commonStringsList.addAll(index.getKGrams().get(s));
+                }else {
+                    //Merging since strings are stored in alphabetical order
+                    commonStringsList = mergeStrings(commonStringsList,index.getKGrams().get(s));
+                }
+            }
         }
-
-        commonStrings.removeIf(s->calJaccardCoeff(stringList,s)<=0.1);
-        //Tie break if there are more than one term with lowest edit distance
+        commonStringsList.removeIf(s->calJaccardCoeff(stringList,s)<=0.1);
+        /* Tie break: If there are more than one term with lowest edit distance
+         * choose the term with higher postings
+         * even if postings size is same we will only consider the term which comes first alphabetically
+         */
         int maxPostings = Integer.MIN_VALUE;
-        for(String leastEditedString:editDistance(word,commonStrings)){
+        for(String leastEditedString:editDistance(word,commonStringsList)){
             int postingListSize = index.getPostingsWithOutPositions(leastEditedString).size();
             if(maxPostings<postingListSize){
                 maxPostings = postingListSize;
                 suggestion = leastEditedString;
             }
         }
-        return suggestion;
+        return suggestion.trim();
     }
 
     /**
@@ -125,5 +133,36 @@ public class TextUtilities {
             stringList.add(modifiedWord.substring(i, i + k));
         }
         return stringList;
+    }
+
+    List<String> mergeStrings(List<String> listA,List<String> listB){
+        List<String> mergedList = new ArrayList<>();
+        int i=0;
+        int j=0;
+        while(i<listA.size() && j<listB.size()){
+            String stringA = listA.get(i);
+            String stringB = listB.get(j);
+            int compare = stringA.compareTo(stringB);
+            if(compare < 0){
+                mergedList.add(stringA);
+                i++;
+            }else if(compare > 0){
+                mergedList.add(stringB);
+                j++;
+            }else{
+                mergedList.add(stringA);
+                i++;
+                j++;
+            }
+        }
+        while(i<listA.size()){
+            mergedList.add(listA.get(i));
+            i++;
+        }
+        while(j<listB.size()){
+            mergedList.add(listB.get(j));
+            j++;
+        }
+        return mergedList;
     }
 }
