@@ -204,6 +204,9 @@ public class DiskIndexWriter {
     {
         try {
             File vocabFile=new File(path,"vocabulary.bin");
+            if(vocabFile.exists())
+                vocabFile.delete();
+            vocabFile.getParentFile().mkdirs();
             DataOutputStream vocabOutputStream=new DataOutputStream(new FileOutputStream(vocabFile));
             for(String token:vocabList)
             {
