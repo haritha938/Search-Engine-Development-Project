@@ -132,7 +132,7 @@ public class PositionalInvertedIndexer  {
 							.stream()
 							.limit(1000)
 							.forEach(System.out::println);
-					System.out.println("Size of the vocabulary is" + index.getVocabulary().size());
+					System.out.println("Size of the vocabulary is: " + index.getVocabulary().size());
 				}
 				else {
 					if (queryMode.equals("1")){
@@ -194,7 +194,8 @@ public class PositionalInvertedIndexer  {
 							}
 							System.out.println("Total number of documents fetched: " + rankedQueries.size());
 							//TODO: Add prompt as y/n to search directly with corrected spelling
-							System.out.println("Would you like to search with following query for better result:" + searchResult.getSuggestedString());
+							if(!query.equals(searchResult.getSuggestedString()))
+								System.out.println("Would you like to search with following query for better result: " + searchResult.getSuggestedString());
 							while (true) {
 								System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
 								documentName = reader.readLine();
@@ -231,7 +232,8 @@ public class PositionalInvertedIndexer  {
 							}
 						} else {
 							System.out.println("No such text can be found in the Corpus!");
-							System.out.println("Would you like to search with following query for better result:" + searchResult.getSuggestedString());
+							if(!query.equals(searchResult.getSuggestedString()))
+								System.out.println("Would you like to search with following query for better result: " + searchResult.getSuggestedString());
 						}
 					}
 				}
@@ -253,16 +255,12 @@ public class PositionalInvertedIndexer  {
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
 		JsonFileDocument file;
 		Map<String,Integer> termToFreq = new HashMap<>();
-		List<Double> lengthOfDocuments = new ArrayList<>();
-		List<String> tokensList=new ArrayList<>();
 		List<Double> weightOfDocuments = new ArrayList<>();
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
 			int i=1;
 			for(String string: strings){
-				//add tokens to diskIndex vocabulary
-				tokensList.add(string.trim());
 				for(String term:tokenProcessor.processToken(string)) {
 					if(!term.isEmpty()) {
 						index.addTerm(term, document.getId(), i);
@@ -315,7 +313,7 @@ public class PositionalInvertedIndexer  {
 				}
 			}
 		}
-		diskIndexWriter.addtoVocb(tokensList);
+		diskIndexWriter.writeVocabularyToDisk(index.getVocabulary());
 		diskIndexWriter.writeWeightOfDocuments(weightOfDocuments);
 		return index;
 	}

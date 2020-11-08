@@ -16,20 +16,14 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DiskPositionalIndex implements Index{
     static String path;
-    DB soundexDb;
-    ConcurrentMap<String, Long> sdiskIndex;
-    DB kgramDb;
-    ConcurrentMap<String, Long> kgramDiskIndex;
-    File soundexFile;
-    File kgramFile;
     DB db;
     ConcurrentMap<String, Long> diskIndex;
     File file;
-    File vocabFile;
-    Map<String,List<String>> kgramIndex=new HashMap<>();
+    Map<String,List<String>> kgramIndex;
 
     public DiskPositionalIndex(String path){
         this.path = path;
+        kgramIndex=new HashMap<>();
         db = DBMaker
                 .fileDB(path + File.separator + "positionalIndex.db")
                 .fileMmapEnable()
@@ -155,7 +149,7 @@ public class DiskPositionalIndex implements Index{
     @Override
     public List<String> getVocabulary() {
         List<String> tokensList=new ArrayList<>();
-
+        File vocabFile;
         vocabFile = new File(path, "vocabulary.bin");
         String token=null;
         try {
@@ -178,7 +172,6 @@ public class DiskPositionalIndex implements Index{
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return tokensList;
     }
 
@@ -191,13 +184,12 @@ public class DiskPositionalIndex implements Index{
     @Override
     public void generateKGrams(int kGramSize) {
         //Todo: from db to create hash map Index-> as class variable
-
-
-            kgramDb = DBMaker
+            File kgramFile;
+            DB kgramDb = DBMaker
                     .fileDB(path + File.separator + "kgrams.db")
                     .fileMmapEnable()
                     .make();
-            kgramDiskIndex = kgramDb
+            ConcurrentMap<String, Long> kgramDiskIndex = kgramDb
                     .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .open();
 
@@ -239,7 +231,7 @@ public class DiskPositionalIndex implements Index{
     @Override
     public List<String> getTerms() {
         List<String> termsList=new ArrayList<>();
-        vocabFile = new File(path, "terms.bin");
+        File vocabFile = new File(path, "terms.bin");
         String term;
 
         try {
@@ -268,14 +260,14 @@ public class DiskPositionalIndex implements Index{
 
 
     public List<Posting> getSoundexPostings(String term){
-        soundexDb = DBMaker
+        DB soundexDb = DBMaker
                 .fileDB(path+File.separator+"soundexPositions.db")
                 .fileMmapEnable()
                 .make();
         sdiskIndex = soundexDb
                 .hashMap("address", Serializer.STRING, Serializer.LONG)
                 .open();
-        soundexFile = new File(path,"SoundexPostings.bin");
+        File soundexFile = new File(path,"SoundexPostings.bin");
 
         List<Posting> postingList = null;
 
