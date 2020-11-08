@@ -69,8 +69,8 @@ public class OrQuery implements Query {
 				OrMergeResult.add(
 						new Posting(
 								A.get(i).getDocumentId()
-								,mergePositions(A.get(i).getPositions(),B.get(j).getPositions()
-						)));
+								,mergePositions(A.get(i).getPositions(),B.get(j).getPositions())
+						,A.get(i).getWdt()+B.get(j).getWdt()));
 				i++;
 				j++;
 			} else if (aDocId < bDocId) {

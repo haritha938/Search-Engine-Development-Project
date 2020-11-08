@@ -1,7 +1,6 @@
 package cecs429.index;
 
 import cecs429.text.SoundexAlgorithm;
-import cecs429.tolerantRetrieval.KGram;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -15,28 +14,29 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Reads data from disk
  */
-public class DiskPositionalIndex implements Index{
+public class DiskPositionalIndex implements Index {
     static String path;
     DB soundexDb;
-    ConcurrentMap<String,Long> sdiskIndex;
+    ConcurrentMap<String, Long> sdiskIndex;
     DB kgramDb;
-    ConcurrentMap<String,Long> kgramDiskIndex;
+    ConcurrentMap<String, Long> kgramDiskIndex;
     File soundexFile;
     File kgramFile;
     DB db;
-    ConcurrentMap<String,Long> diskIndex;
+    ConcurrentMap<String, Long> diskIndex;
     File file;
-    Map<String,List<String>> kgramIndex=new HashMap<>();
-    public DiskPositionalIndex(String path){
+    Map<String, List<String>> kgramIndex = new HashMap<>();
+
+    public DiskPositionalIndex(String path) {
         this.path = path;
         soundexDb = DBMaker
-                .fileDB(path+File.separator+"soundexPositions.db")
+                .fileDB(path + File.separator + "soundexPositions.db")
                 .fileMmapEnable()
                 .make();
         sdiskIndex = soundexDb
                 .hashMap("address", Serializer.STRING, Serializer.LONG)
                 .open();
-        soundexFile = new File(path,"SoundexPostings.bin");
+        soundexFile = new File(path, "SoundexPostings.bin");
         kgramDb = DBMaker
                 .fileDB(path + File.separator + "kgrams.db")
                 .fileMmapEnable()
@@ -57,14 +57,13 @@ public class DiskPositionalIndex implements Index{
     }
 
     /**
-     * @return list postings of given
      * @param term where each posting consist of document Id and positions of occurrence
+     * @return list postings of given
      */
     @Override
     public List<Posting> getPostingsWithPositions(String term) {
 
-        if(db.isClosed())
-        {
+        if (db.isClosed()) {
 
             db = DBMaker
                     .fileDB(path + File.separator + "positionalIndex.db")
@@ -77,10 +76,9 @@ public class DiskPositionalIndex implements Index{
         }
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
-
-            if (diskIndex.get(term) == null)
+            if (!diskIndex.containsKey(term)) {
                 return null;
-
+            }
             long address = diskIndex.get(term);
             randomAccessFile.seek(address);
             byte[] readIntBuffer = new byte[4];
@@ -95,6 +93,7 @@ public class DiskPositionalIndex implements Index{
                 randomAccessFile.read(readDoubleBuffer, 0, readDoubleBuffer.length);
                 //Skipping since boolean query does not need wdt
                 randomAccessFile.read(readIntBuffer, 0, readIntBuffer.length);
+                double weightOfDocTerm = ByteBuffer.wrap(readDoubleBuffer).getDouble();
                 int numberOfTerms = ByteBuffer.wrap(readIntBuffer).getInt();
                 List<Integer> positions = new ArrayList<>(numberOfTerms);
                 int previousPosition = 0;
@@ -104,7 +103,7 @@ public class DiskPositionalIndex implements Index{
                     positions.add(currentPosition);
                     previousPosition = currentPosition;
                 }
-                postingList.add(new Posting(currentDocumentId, positions));
+                postingList.add(new Posting(currentDocumentId, positions,weightOfDocTerm));
                 previousDocumentId = currentDocumentId;
             }
         } catch (FileNotFoundException e) {
@@ -117,17 +116,15 @@ public class DiskPositionalIndex implements Index{
     }
 
     /**
-     * @return list postings of given
      * @param term where each posting consist of document Id, weight of
      * @param term in document, frequency of
      * @param term in document
-     * without positions
+     *             without positions
+     * @return list postings of given
      */
     @Override
     public List<Posting> getPostingsWithOutPositions(String term) {
-        if(db.isClosed())
-        {
-
+        if (db.isClosed()) {
             db = DBMaker
                     .fileDB(path + File.separator + "positionalIndex.db")
                     .fileMmapEnable()
@@ -166,9 +163,7 @@ public class DiskPositionalIndex implements Index{
             e.printStackTrace();
         }
         db.close();
-
         return postingList;
-
     }
 
     @Override
@@ -188,8 +183,7 @@ public class DiskPositionalIndex implements Index{
 
         //Todo: from db to create hash map Index-> as class variable
 
-        if(kgramDb.isClosed())
-        {
+        if (kgramDb.isClosed()) {
             kgramDb = DBMaker
                     .fileDB(path + File.separator + "kgrams.db")
                     .fileMmapEnable()
@@ -201,12 +195,12 @@ public class DiskPositionalIndex implements Index{
             kgramFile = new File(path, "kgrams.bin");
         }
         kgramFile = new File(path, "kgrams.bin");
-        String kgram=null;
+        String kgram = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(kgramFile, "r")) {
 
-            Iterator<String> iterator=kgramDiskIndex.keySet().iterator();
+            Iterator<String> iterator = kgramDiskIndex.keySet().iterator();
             while (iterator.hasNext()) {
-                kgram=iterator.next();
+                kgram = iterator.next();
 
                 long address = kgramDiskIndex.get(kgram);
                 randomAccessFile.seek(address);
@@ -214,18 +208,15 @@ public class DiskPositionalIndex implements Index{
                 randomAccessFile.read(readIntBuffer, 0, readIntBuffer.length);
                 int numberOfTermsPerKgram = ByteBuffer.wrap(readIntBuffer).getInt();
                 ArrayList<String> listOfTerms = new ArrayList<>(numberOfTermsPerKgram);
-                for (int i = 0; i < numberOfTermsPerKgram; i++)
-                {
+                for (int i = 0; i < numberOfTermsPerKgram; i++) {
                     randomAccessFile.read(readIntBuffer, 0, readIntBuffer.length);
                     int lengthOfKgram = ByteBuffer.wrap(readIntBuffer).getInt();
                     byte[] readCharBuffer = new byte[lengthOfKgram];
                     randomAccessFile.read(readCharBuffer, 0, readCharBuffer.length);
-                    String kgramString =  new String(readCharBuffer, StandardCharsets.UTF_8);
-
+                    String kgramString = new String(readCharBuffer, StandardCharsets.UTF_8);
                     listOfTerms.add(kgramString);
                 }
-                kgramIndex.put(kgram,listOfTerms);
-
+                kgramIndex.put(kgram, listOfTerms);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -233,8 +224,8 @@ public class DiskPositionalIndex implements Index{
             e.printStackTrace();
         }
         kgramDb.close();
-        //kgramFile
     }
+
     @Override
     public Map<String, List<Posting>> getIndex() {
         return null;
@@ -246,30 +237,26 @@ public class DiskPositionalIndex implements Index{
     }
 
 
-    public List<Posting> getSoundexPostings(String term){
+    public List<Posting> getSoundexPostings(String term) {
 
         List<Posting> postingList = null;
 
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(soundexFile, "r")) {
 
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(soundexFile,"r")) {
-
-            String s1= SoundexAlgorithm.getSoundexCode(term);
-            if(sdiskIndex.get(s1)==null){
+            String s1 = SoundexAlgorithm.getSoundexCode(term);
+            if (sdiskIndex.get(s1) == null) {
                 return null;
             }
             long address = sdiskIndex.get(s1);
             randomAccessFile.seek(address);
             byte[] readIntBuffer = new byte[4];
-            byte[] readDoubleBuffer = new byte[8];
-            randomAccessFile.read(readIntBuffer,0,readIntBuffer.length);
+            randomAccessFile.read(readIntBuffer, 0, readIntBuffer.length);
             int numberOfPostings = ByteBuffer.wrap(readIntBuffer).getInt();
             postingList = new ArrayList<>(numberOfPostings);
-            int previousDocumentId=0;
-            for(int i=0;i<numberOfPostings;i++){
-
-                randomAccessFile.read(readIntBuffer,0,readIntBuffer.length);
-                int currentDocumentId = ByteBuffer.wrap(readIntBuffer).getInt()+previousDocumentId;
-
+            int previousDocumentId = 0;
+            for (int i = 0; i < numberOfPostings; i++) {
+                randomAccessFile.read(readIntBuffer, 0, readIntBuffer.length);
+                int currentDocumentId = ByteBuffer.wrap(readIntBuffer).getInt() + previousDocumentId;
                 postingList.add(new Posting(currentDocumentId));
                 previousDocumentId = currentDocumentId;
             }

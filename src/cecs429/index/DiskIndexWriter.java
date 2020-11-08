@@ -1,6 +1,5 @@
 package cecs429.index;
 
-import cecs429.tolerantRetrieval.KGram;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -30,10 +29,10 @@ public class DiskIndexWriter {
         File postingsFile = new File(path,"Postings.bin");
         File mapDBFile = new File(path,"positionalIndex.db");
         postingsFile.getParentFile().mkdirs();
-        if(postingsFile.exists()) {
+        if(postingsFile.exists())
             postingsFile.delete();
+        if(mapDBFile.exists())
             mapDBFile.delete();
-        }
         Map<String, List<Posting>> positionalInvertedIndex = index.getIndex();
         List<String> sortedTerms = new ArrayList<>(index.getIndex().keySet());
         Collections.sort(sortedTerms);
@@ -74,11 +73,9 @@ public class DiskIndexWriter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            db.close();
         }
         return locations;
     }
-//haritha-->WriteKgramIndex()
 
     public List<Long> writeKgramIndex(Map<String,List<String>> kgramIndex)
     {
@@ -126,7 +123,6 @@ public class DiskIndexWriter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            db.close();
         }
         return locations;
 
@@ -147,25 +143,20 @@ public class DiskIndexWriter {
         try(DB db= DBMaker.fileDB(path + File.separator + "soundexPositions.db").fileMmapEnable().make()) {
             ConcurrentMap<String, Long> diskIndex = db.hashMap("address", Serializer.STRING, Serializer.LONG).create();
 
-            try (DataOutputStream outputstream = new DataOutputStream(new FileOutputStream(postingsFile))) {
+            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
                 postingsFile.createNewFile();
                 for (String term : sortedTerms) {
                     List<Posting> postingList = soundexPostingsIndex.get(term);
-                    locations.add((long) outputstream.size());
-                    diskIndex.put(term,(long)outputstream.size());
-                    outputstream.writeInt(postingList.size());
+                    locations.add((long) outputStream.size());
+                    diskIndex.put(term,(long)outputStream.size());
+                    outputStream.writeInt(postingList.size());
                     int previousDocId=0;
                     for(Posting posting: postingList){
-                        outputstream.writeInt(posting.getDocumentId()-previousDocId);
+                        outputStream.writeInt(posting.getDocumentId()-previousDocId);
                         previousDocId=posting.getDocumentId();
-
                     }
                 }
-
             }
-            db.close();
-        }catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -176,7 +167,7 @@ public class DiskIndexWriter {
      * Writes
      * @param lengths of documents to docWeights.bin file
      */
-    public void writeLengthOfDocument(List<Double> lengths){
+    public void writeWeightOfDocuments(List<Double> lengths){
         File file = new File(path,"docWeights.bin");
         file.getParentFile().mkdirs();
         try {
