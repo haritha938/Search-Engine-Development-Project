@@ -7,8 +7,7 @@ import cecs429.text.TokenProcessor;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -20,13 +19,14 @@ public class RankedQueryParser {
     String path;
     int limit;
     TokenProcessor tokenProcessor;
-
-    public RankedQueryParser(Index index, int sizeOfCorpus, String path, int limit, TokenProcessor tokenProcessor) {
+    int thresholdCheck;
+    float jaccardCoefficintThreshold;
+    public RankedQueryParser(Index index, int sizeOfCorpus, String path, TokenProcessor tokenProcessor) {
         this.diskIndex = index;
         this.sizeOfCorpus = sizeOfCorpus;
         this.path = path;
-        this.limit = limit;
         this.tokenProcessor = tokenProcessor;
+        readProperties();
     }
 
     public SearchResult getPostings(String query) {
@@ -46,14 +46,14 @@ public class RankedQueryParser {
                         : tokenProcessor.processToken(searchToken).get(0);
                 postingList = diskIndex.getPostingsWithOutPositions(searchTerm);
                 if (postingList == null) {
-                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex,0);
+                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex, 0, jaccardCoefficintThreshold);
                     if(suggestion.equals(""))
                         querySuggestion.append(" ").append(searchToken);
                     else
                         querySuggestion.append(" ").append(suggestion);
                     continue;
-                } else if (postingList.size() < 10) {
-                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex, postingList.size());
+                } else if (postingList.size() < thresholdCheck) {
+                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex, postingList.size(), jaccardCoefficintThreshold);
                     if(suggestion.equals(""))
                         querySuggestion.append(" ").append(searchToken);
                     else
@@ -75,23 +75,31 @@ public class RankedQueryParser {
                 documentAccumulatorMap.put(posting.getDocumentId(), accumulator);
             }
         }
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
-            byte[] doubleBuffer = new byte[8];
-            for (Integer documentID : documentAccumulatorMap.keySet()) {
-                randomAccessFile.seek((documentID - 1) * 8);
-                randomAccessFile.read(doubleBuffer, 0, doubleBuffer.length);
-                double docWeight = ByteBuffer.wrap(doubleBuffer).getDouble();
-                Accumulator accumulator = documentAccumulatorMap.get(documentID);
-                accumulator.setPriority(accumulator.getPriority() / docWeight);
-                rankedPostings.add(accumulator);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+
+        for (Integer documentID : documentAccumulatorMap.keySet()) {
+            Accumulator accumulator = documentAccumulatorMap.get(documentID);
+            accumulator.setPriority(accumulator.getPriority() / diskIndex.getDocLength(documentID));
+            rankedPostings.add(accumulator);
         }
+
         for (int i = 0; i < Math.min(limit, documentAccumulatorMap.size()); i++) {
             rankedSearchResult.add(rankedPostings.poll());
         }
         searchAcknowledgment = new SearchResult(querySuggestion.toString().trim(), rankedSearchResult);
         return searchAcknowledgment;
-        }
     }
+
+    public void readProperties(){
+
+        try(InputStream in = getClass().getResourceAsStream("/Application.properties")){
+            Properties prop = new Properties();
+            prop.load(in);
+            limit = Integer.parseInt(prop.getProperty("numberOfRetrievalsForRankedQueries"));
+            thresholdCheck = Integer.parseInt(prop.getProperty("documentFrequencyThreshold"));
+            jaccardCoefficintThreshold = Float.parseFloat(prop.getProperty("jaccardCoefficientThreshold"));
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return ;
+    }
+}

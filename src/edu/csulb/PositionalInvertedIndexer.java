@@ -24,7 +24,6 @@ public class PositionalInvertedIndexer  {
 	static Index index;
 	static BufferedReader reader;
 	static int corpusSize;
-	static int limit = 10;
 	static Path path;
 	static DiskPositionalIndex diskPositionalIndex;
 	static SoundexPositionalIndex soudnexpositionalindex;
@@ -361,7 +360,6 @@ public class PositionalInvertedIndexer  {
 		RankedQueryParser rankedQueryParser = new RankedQueryParser(index
 				,corpusSize
 				,path.toString()+File.separator+"index"
-				,limit
 				,tokenProcessor);
 		SearchResult searchResult = rankedQueryParser.getPostings(query);
 		return  searchResult;

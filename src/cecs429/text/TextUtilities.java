@@ -77,7 +77,7 @@ public class TextUtilities {
      * @param word by considering the data set
      * @param index
      */
-    public String getSuggestion(String word, Index index,int postingsThreshold){
+    public String getSuggestion(String word, Index index,int occurredPostingsSize,float jaccardCoefficintThreshold){
         String suggestion=word;
         List<String> commonStringsList = new ArrayList<>();
         List<String> stringList = getKGrams(word);
@@ -91,7 +91,7 @@ public class TextUtilities {
                 }
             }
         }
-        commonStringsList.removeIf(s->calJaccardCoeff(stringList,s)<=0.1);
+        commonStringsList.removeIf(s->calJaccardCoeff(stringList,s) <= jaccardCoefficintThreshold);
         /* Tie break: If there are more than one term with lowest edit distance
          * choose the term with higher postings
          * even if postings size is same we will only consider the term which comes first alphabetically
@@ -105,7 +105,7 @@ public class TextUtilities {
                 suggestion = leastEditedString;
             }
         }
-        if(maxPostings<=postingsThreshold){
+        if(maxPostings <= occurredPostingsSize){
             suggestion="";
         }
         return suggestion.trim();
