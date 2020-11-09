@@ -61,7 +61,7 @@ public class DiskIndexWriter {
                     locations.add((long) outputStream.size());
                     diskIndex.put(term, (long) outputStream.size());
                     //Convert term to bytes
-                    byte arr[]=term.getBytes(StandardCharsets.UTF_8);
+                    byte arr[]=term.getBytes("UTF8");
                     //write size of term
                     outputStreamForTerms.writeInt(arr.length);
                     //Writing term to terms.bin;
@@ -121,6 +121,11 @@ public class DiskIndexWriter {
                 outputStream = new DataOutputStream(new FileOutputStream(kgramsFile));
                 kgramsFile.createNewFile();
                 for (String kgram : sortedKgrams) {
+                    //Todo: This needs to be corrected.
+                    if(kgram.equals("$"))
+                    {
+                        continue;
+                    }
                     List<String> termsPeKgram = kgramIndex.get(kgram);
                     //Writing current stream location to output list and dictionary of kgram to address
                     locations.add((long) outputStream.size());
@@ -129,7 +134,7 @@ public class DiskIndexWriter {
                     //Writing Number of terms for given kgram
                     outputStream.writeInt(termsPeKgram.size());
                     for (String term : termsPeKgram) {
-                        byte arr[]=term.getBytes(StandardCharsets.UTF_8);
+                        byte arr[]=term.getBytes("UTF8");
                         //Writing size of term;
                         outputStream.writeInt(arr.length);
                         outputStream.write(arr);
@@ -209,19 +214,23 @@ public class DiskIndexWriter {
             File vocabFile=new File(path,"vocabulary.bin");
             if(vocabFile.exists())
                 vocabFile.delete();
+            else
             vocabFile.getParentFile().mkdirs();
             DataOutputStream vocabOutputStream=new DataOutputStream(new FileOutputStream(vocabFile));
             for(String token:vocabList)
             {
                 //Convert token to bytes
-                byte arr[] = token.trim().getBytes(StandardCharsets.UTF_8);
+                byte arr[] = token.trim().getBytes("UTF8");
                 //write size of token
                 vocabOutputStream.writeInt(arr.length);
                 //Writing token to vocabulary.bin;
                 vocabOutputStream.write(arr);
             }
             vocabOutputStream.close();
-        } catch (IOException e) {
+        }catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
