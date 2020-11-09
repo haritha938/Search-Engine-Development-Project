@@ -75,4 +75,9 @@ public class TermDocumentIndex implements Index {
 	public List<String> getTerms() {
 		return null;
 	}
+
+	@Override
+	public double getDocLength(int documentID) {
+		return 0;
+	}
 }

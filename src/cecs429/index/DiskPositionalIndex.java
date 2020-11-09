@@ -251,4 +251,21 @@ public class DiskPositionalIndex implements Index{
         }
         return termsList;
     }
+
+    @Override
+    public double getDocLength(int documentID) {
+        double docWeight=0;
+        File file = new File(path+File.separator+"docWeights.bin");
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
+            byte[] doubleBuffer = new byte[8];
+            randomAccessFile.seek((documentID - 1) * 8);
+            randomAccessFile.read(doubleBuffer, 0, doubleBuffer.length);
+            docWeight = ByteBuffer.wrap(doubleBuffer).getDouble();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return docWeight;
+    }
 }

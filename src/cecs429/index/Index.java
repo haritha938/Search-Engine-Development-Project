@@ -34,9 +34,15 @@ public interface Index {
 	 * to generate k-grams
 	 */
 	void generateKGrams(int kGramSize);
-	/**
-	 * Retrieves the InvertedIndex
-	 */
 
+	/**
+	 * @return list of terms of given corpus
+	 */
 	List<String> getTerms();
+
+	/**
+	 * @return document weight of
+	 * @param documentID
+	 */
+	double getDocLength(int documentID);
 }

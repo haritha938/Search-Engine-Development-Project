@@ -311,7 +311,7 @@ public class PositionalInvertedIndexer  {
 				}
 			}
 		}
-		diskIndexWriter.writeVocabularyToDisk(index.getVocabulary());
+		index.setWeightOfDocuments(weightOfDocuments);
 		diskIndexWriter.writeWeightOfDocuments(weightOfDocuments);
 		return index;
 	}
@@ -391,6 +391,7 @@ public class PositionalInvertedIndexer  {
 		long startTime=System.nanoTime();
 		index = indexCorpus(corpus,tokenProcessor);
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
+		diskIndexWriter.writeVocabularyToDisk(index.getVocabulary());
 		List<Long> soundexAddresses=  soundexdiskwriter.writeSoundexIndex(soundexindex);
 		index.generateKGrams(3);
 		Map<String,List<String>> kgramIndex=index.getKGrams();
