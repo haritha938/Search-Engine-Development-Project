@@ -1,6 +1,5 @@
 package cecs429.index;
 
-import cecs429.text.SoundexAlgorithm;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -16,21 +15,11 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DiskPositionalIndex implements Index{
     static String path;
-    DB db;
-    ConcurrentMap<String, Long> diskIndex;
-    File file;
     Map<String,List<String>> kgramIndex;
 
     public DiskPositionalIndex(String path){
         this.path = path;
         kgramIndex=new HashMap<>();
-        db = DBMaker
-                .fileDB(path + File.separator + "positionalIndex.db")
-                .fileMmapEnable()
-                .make();
-        diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                .open();
-       file = new File(path, "Postings.bin");
     }
 
     /**
@@ -39,19 +28,19 @@ public class DiskPositionalIndex implements Index{
      */
     @Override
     public List<Posting> getPostingsWithPositions(String term) {
+        DB db;
+        ConcurrentMap<String, Long> diskIndex;
+        File file;
 
-        if (db.isClosed()) {
+        db = DBMaker
+                .fileDB(path + File.separator + "positionalIndex.db")
+                .fileMmapEnable()
+                .make();
+        diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                .open();
 
-            db = DBMaker
-                    .fileDB(path + File.separator + "positionalIndex.db")
-                    .fileMmapEnable()
-                    .make();
-            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                    .open();
+        file = new File(path, "Postings.bin");
 
-            file = new File(path, "Postings.bin");
-        }
-       //
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
 
@@ -103,19 +92,18 @@ public class DiskPositionalIndex implements Index{
      */
     @Override
     public List<Posting> getPostingsWithOutPositions(String term) {
-        if(db.isClosed())
-        {
+        DB db;
+        ConcurrentMap<String, Long> diskIndex;
+        File file;
 
-            db = DBMaker
-                    .fileDB(path + File.separator + "positionalIndex.db")
-                    .fileMmapEnable()
-                    .make();
-            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                    .open();
+        db = DBMaker
+                .fileDB(path + File.separator + "positionalIndex.db")
+                .fileMmapEnable()
+                .make();
+        diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                .open();
 
-            file = new File(path, "Postings.bin");
-        }
-       //
+        file = new File(path, "Postings.bin");
 
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
@@ -154,8 +142,7 @@ public class DiskPositionalIndex implements Index{
         File vocabFile;
         vocabFile = new File(path, "vocabulary.bin");
         String token=null;
-        try {
-            DataInputStream dataInputStream=new DataInputStream(new FileInputStream(vocabFile));
+        try(DataInputStream dataInputStream=new DataInputStream(new FileInputStream(vocabFile))){
             while (dataInputStream.available()>0) {
                 byte[] readIntBuffer = new byte[4];
                 //read token length
@@ -179,13 +166,11 @@ public class DiskPositionalIndex implements Index{
 
     @Override
     public Map<String, List<String>> getKGrams() {
-        //Todo: return Index
         return kgramIndex;
     }
 
     @Override
     public void generateKGrams(int kGramSize) {
-        //Todo: from db to create hash map Index-> as class variable
             File kgramFile;
             DB kgramDb = DBMaker
                     .fileDB(path + File.separator + "kgrams.db")
@@ -227,7 +212,6 @@ public class DiskPositionalIndex implements Index{
             e.printStackTrace();
         }
         kgramDb.close();
-
     }
 
     @Override
@@ -236,8 +220,7 @@ public class DiskPositionalIndex implements Index{
         File vocabFile = new File(path, "terms.bin");
         String term;
 
-        try {
-            DataInputStream dataInputStream=new DataInputStream(new FileInputStream(vocabFile));
+        try (DataInputStream dataInputStream=new DataInputStream(new FileInputStream(vocabFile))){
             while (dataInputStream.available()>0) {
                 byte[] readIntBuffer = new byte[4];
                 //read term length
@@ -249,14 +232,11 @@ public class DiskPositionalIndex implements Index{
                 term = new String(readCharBuffer, StandardCharsets.UTF_8);
                 termsList.add(term);
             }
-            }
-        catch (FileNotFoundException ex)
-        {
+        } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return termsList;
     }
 }
