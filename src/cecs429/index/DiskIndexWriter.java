@@ -143,7 +143,7 @@ public class DiskIndexWriter {
         }
         return locations;
     }
-
+/*
     public List<Long> writeSoundexIndex(SoundexIndex soundexindex){
         List<Long> locations= new LinkedList<>();
         File postingsFile=new File(path,"SoundexPostings.bin");
@@ -179,6 +179,9 @@ public class DiskIndexWriter {
         return locations;
 
     }
+   */
+    /*
+
     /**
      * Writes
      * @param lengths of documents to docWeights.bin file

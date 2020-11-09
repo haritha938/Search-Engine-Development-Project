@@ -28,6 +28,8 @@ public class PositionalInvertedIndexer  {
 	static int limit = 10;
 	static Path path;
 	static DiskPositionalIndex diskPositionalIndex;
+	static SoundexPositionalIndex soudnexpositionalindex;
+	static SoundexDiskIndexWriter soundexdiskwriter;
 
 
 	public static void main(String[] args) {
@@ -43,6 +45,7 @@ public class PositionalInvertedIndexer  {
 			if(programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
 				chooseTokenProcessor();
 				createIndex(path);
+
 			}
 			else{
 				tokenProcessor=new AdvanceTokenProcessor();
@@ -50,6 +53,7 @@ public class PositionalInvertedIndexer  {
 			diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
 			diskPositionalIndex.generateKGrams(3);
 			kgramIndex=diskPositionalIndex.getKGrams();
+			soudnexpositionalindex=new SoundexPositionalIndex(path.toString()+File.separator+"index");
 			//soundexdiskreader=new SoundexDiskReader(path.toString()+File.separator+"index");
 
 			System.out.println("Entering query mode");
@@ -83,7 +87,7 @@ public class PositionalInvertedIndexer  {
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
 					// Getting the soundexIndex postings for the given term
 					//List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
-					List<Posting> resultPostings=getSoundexDiskIndexPostings(tokenTerm,diskPositionalIndex,tokenProcessor);
+					List<Posting> resultPostings=getSoundexDiskIndexPostings(tokenTerm,soudnexpositionalindex,tokenProcessor);
 					// If the resultant postings are not null, print the postings
 					if(resultPostings!=null){
 						for(Posting p: resultPostings){
@@ -346,14 +350,14 @@ public class PositionalInvertedIndexer  {
 	// Returns the resultant postings from the given author query
 	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
 
-		List<Posting> resultPostings=index.getPostings(tokenProcessor.processToken(query).get(0));
+		List<Posting> resultPostings=index.getPostingsWithOutPositions(tokenProcessor.processToken(query).get(0));
 		if(resultPostings!=null){
 			return resultPostings;
 		}
 		return null;
 	}
-	public static List<Posting> getSoundexDiskIndexPostings(String query,DiskPositionalIndex index,TokenProcessor tokenprocessor){
-		List<Posting> resultPostings=index.getSoundexPostings(tokenprocessor.processToken(query).get(0));
+	public static List<Posting> getSoundexDiskIndexPostings(String query,SoundexPositionalIndex index,TokenProcessor tokenprocessor){
+		List<Posting> resultPostings=index.getPostingsWithOutPositions(tokenprocessor.processToken(query).get(0));
 		if(resultPostings!=null)
 			return resultPostings;
 		return null;
@@ -361,13 +365,12 @@ public class PositionalInvertedIndexer  {
 	public static DocumentCorpus createIndex(Path path){
 		diskIndexWriter = new DiskIndexWriter(path.toString()
 				+File.separator+"index");
+		soundexdiskwriter=new SoundexDiskIndexWriter(path.toString()+File.separator+"index");
 		//sIndexWriter=new SoundexIndexWriter(path.toString()+File.separator+"index");
 		long startTime=System.nanoTime();
 		index = indexCorpus(corpus,tokenProcessor);
-		SoundexIndex soundexindex=getSoundexIndex();
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
-		List<Long> soundexAddresses=  diskIndexWriter.writeSoundexIndex(soundexindex);
-
+		List<Long> soundexAddresses=  soundexdiskwriter.writeSoundexIndex(soundexindex);
 		index.generateKGrams(3);
 		Map<String,List<String>> kgramIndex=index.getKGrams();
 		List<Long> kgramAddress=  diskIndexWriter.writeKgramIndex(kgramIndex);
