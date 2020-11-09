@@ -329,7 +329,7 @@ public class PositionalInvertedIndexer  {
 			if (programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
 				chooseTokenProcessor();
 				//createIndex(path);
-				createIndex(path, corpus, tokenProcessor);
+				createIndex(path,index, corpus, tokenProcessor);
 			} else {
 				tokenProcessor = new AdvanceTokenProcessor();
 			}
@@ -384,7 +384,7 @@ public class PositionalInvertedIndexer  {
 		return null;
 	}
 	//public static DocumentCorpus createIndex(Path path){
-	public static DocumentCorpus createIndex(Path path, DocumentCorpus corpus, TokenProcessor tokenProcessor){
+	public static DocumentCorpus createIndex(Path path,Index index, DocumentCorpus corpus, TokenProcessor tokenProcessor){
 
 		diskIndexWriter = new DiskIndexWriter(path.toString()
 				+File.separator+"index");

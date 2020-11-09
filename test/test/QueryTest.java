@@ -126,7 +126,7 @@ public class QueryTest {
 
         Class[] arg = new Class[4];
         arg[0] = Path.class;
-        arg[1]=Index.class;
+       arg[1]=Index.class;
         arg[2]=DocumentCorpus.class;
         arg[3]=TokenProcessor.class;
         try {
@@ -151,6 +151,7 @@ public class QueryTest {
 
     @Test
     public void TestQuery() {
+
 
 
 
