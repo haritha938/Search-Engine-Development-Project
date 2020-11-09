@@ -57,6 +57,11 @@ public class PhraseLiteral implements Query {
 	}
 
 	@Override
+	public List<Posting> getPostingsWithoutPositions(Index index) {
+		return null;
+	}
+
+	@Override
 	public boolean isNegativeQuery() {
 		return isNegativeLiteral;
 	}

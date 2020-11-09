@@ -18,6 +18,14 @@ public class NotQuery implements Query {
         return mChild.getPostings(index);
     }
 
+    /**
+     * This class is used for boolean queries so this method never get called
+     */
+    @Override
+    public List<Posting> getPostingsWithoutPositions(Index index) {
+        return null;
+    }
+
     @Override
     //notQuery is always a negative query. Hence, returns true
     public boolean isNegativeQuery() {

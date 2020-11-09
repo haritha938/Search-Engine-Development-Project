@@ -36,6 +36,11 @@ public class TermLiteral implements Query {
 	}
 
 	@Override
+	public List<Posting> getPostingsWithoutPositions(Index index) {
+		return index.getPostingsWithOutPositions(mTerm);
+	}
+
+	@Override
 	public boolean isNegativeQuery() {
 		return isNegativeLiteral;
 	}

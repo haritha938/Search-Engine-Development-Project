@@ -2,6 +2,7 @@ package cecs429.query;
 
 import cecs429.index.Index;
 import cecs429.index.Posting;
+import cecs429.index.TermDocumentIndex;
 import cecs429.text.TextUtilities;
 import cecs429.text.TokenProcessor;
 
@@ -41,19 +42,16 @@ public class RankedQueryParser {
         for (String searchToken : queryTerms) {
             List<Posting> postingList = null;
             if (!searchToken.contains("*")) {
-                String searchTerm = (searchToken.contains("-"))
-                        ? tokenProcessor.processToken(searchToken.replaceAll("-", "")).get(0)
-                        : tokenProcessor.processToken(searchToken).get(0);
-                postingList = diskIndex.getPostingsWithOutPositions(searchTerm);
+                postingList = new TermLiteral(searchToken,tokenProcessor,false).getPostingsWithoutPositions(diskIndex);
                 if (postingList == null) {
-                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex, 0, jaccardCoefficintThreshold);
+                    String suggestion = textUtilities.getSuggestion(searchToken, diskIndex, 0, jaccardCoefficintThreshold);
                     if(suggestion.equals(""))
                         querySuggestion.append(" ").append(searchToken);
                     else
                         querySuggestion.append(" ").append(suggestion);
                     continue;
                 } else if (postingList.size() < thresholdCheck) {
-                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex, postingList.size(), jaccardCoefficintThreshold);
+                    String suggestion = textUtilities.getSuggestion(searchToken, diskIndex, postingList.size(), jaccardCoefficintThreshold);
                     if(suggestion.equals(""))
                         querySuggestion.append(" ").append(searchToken);
                     else
@@ -63,8 +61,10 @@ public class RankedQueryParser {
                 }
             }else {
                 Query q = new WildcardLiteral(searchToken.trim(), tokenProcessor, false);
-                postingList = q.getPostings(diskIndex);
+                postingList = q.getPostingsWithoutPositions(diskIndex);
                 querySuggestion.append(" ").append(searchToken);
+                if(postingList == null)
+                    continue;
             }
             double wqt = Math.log(1 + (((double) sizeOfCorpus) / postingList.size()));
             for (Posting posting : postingList) {
@@ -100,6 +100,5 @@ public class RankedQueryParser {
         }catch (IOException e){
             e.printStackTrace();
         }
-        return ;
     }
 }

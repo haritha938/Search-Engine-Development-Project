@@ -83,7 +83,7 @@ public class DiskPositionalIndex implements Index{
                     positions.add(currentPosition);
                     previousPosition = currentPosition;
                 }
-                postingList.add(new Posting(currentDocumentId, positions,weightOfDocTerm));
+                postingList.add(new Posting(currentDocumentId, positions));
                 previousDocumentId = currentDocumentId;
             }
         } catch (FileNotFoundException e) {
@@ -137,7 +137,7 @@ public class DiskPositionalIndex implements Index{
                     randomAccessFile.read(readIntBuffer, 0, readIntBuffer.length);
                     int numberOfTerms = ByteBuffer.wrap(readIntBuffer).getInt();
                     randomAccessFile.skipBytes(4 * numberOfTerms);
-                    postingList.add(new Posting(currentDocumentId, weightOfDocTerm, numberOfTerms));
+                    postingList.add(new Posting(currentDocumentId, weightOfDocTerm));
                     previousDocumentId = currentDocumentId;
                 }
             }

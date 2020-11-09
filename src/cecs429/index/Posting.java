@@ -10,7 +10,6 @@ public class Posting {
 	private int mDocumentId;
 	private List<Integer> mPositionsList;
 	double wdt;
-	int tftd;
 
 	public Posting(int documentId) {
 		mDocumentId = documentId;
@@ -21,16 +20,9 @@ public class Posting {
 		this.mPositionsList = positionList;
 	}
 
-	public Posting(int documentId,List<Integer> positionList,double wdt){
-		this.mDocumentId = documentId;
-		this.mPositionsList = positionList;
-		this.wdt = wdt;
-	}
-
-	public Posting(int mDocumentId, double wdt, int tftd) {
+	public Posting(int mDocumentId, double wdt) {
 		this.mDocumentId = mDocumentId;
 		this.wdt = wdt;
-		this.tftd = tftd;
 	}
 
 	public Posting(int documentId, int position) {
@@ -49,10 +41,6 @@ public class Posting {
 
 	public List<Integer> getPositions(){
 		return mPositionsList;
-	}
-
-	public int getTftd() {
-		return tftd;
 	}
 
 	public double getWdt() {
