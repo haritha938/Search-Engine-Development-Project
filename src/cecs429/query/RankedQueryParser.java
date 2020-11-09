@@ -83,7 +83,7 @@ public class RankedQueryParser {
         for (int i = 0; i < Math.min(limit, documentAccumulatorMap.size()); i++) {
             rankedSearchResult.add(rankedPostings.poll());
         }
-        searchAcknowledgment = new SearchResult(suggestion.toString(), rankedSearchResult);
+        searchAcknowledgment = new SearchResult(suggestion.toString().trim(), rankedSearchResult);
         return searchAcknowledgment;
         }
     }

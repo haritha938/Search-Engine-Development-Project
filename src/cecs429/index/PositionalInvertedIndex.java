@@ -79,11 +79,8 @@ public class PositionalInvertedIndex implements Index {
         kGramsOfVocabulary = kGram.getkGramIndex(getVocabulary());
     }
 
-
     @Override
     public List<String> getTerms() {
         return new ArrayList<>(mIndex.keySet());
     }
-
-
 }

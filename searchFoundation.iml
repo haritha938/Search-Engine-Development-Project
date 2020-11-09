@@ -121,7 +121,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="org.mapdb:mapdb:3.0.8" level="project" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -133,5 +132,6 @@
     </orderEntry>
     <orderEntry type="library" name="org.jetbrains.kotlin:kotlin-runtime:1.2.70" level="project" />
     <orderEntry type="library" exported="" name="org.mapdb:mapdb:3.0.4" level="project" />
+    <orderEntry type="library" name="org.mapdb:mapdb:3.0.8" level="project" />
   </component>
 </module>
