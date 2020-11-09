@@ -49,7 +49,7 @@ public class PositionalInvertedIndex implements Index {
 
     @Override
     public List<Posting> getPostingsWithOutPositions(String term) {
-        return null;
+        return mIndex.get(term);
     }
 
     public List<String> getVocabulary(){

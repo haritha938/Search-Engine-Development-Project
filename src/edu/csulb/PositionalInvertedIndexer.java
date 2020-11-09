@@ -20,7 +20,6 @@ public class PositionalInvertedIndexer  {
 	// Creating a soundexIndex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
 	static DiskIndexWriter diskIndexWriter=null;
-	static Map<String,List<String>> kgramIndex=new HashMap<>();
 	static DocumentCorpus corpus;
 	static Index index;
 	static BufferedReader reader;
@@ -254,16 +253,12 @@ public class PositionalInvertedIndexer  {
 		PositionalInvertedIndex index = new PositionalInvertedIndex();
 		JsonFileDocument file;
 		Map<String,Integer> termToFreq = new HashMap<>();
-		List<Double> lengthOfDocuments = new ArrayList<>();
-		List<String> tokensList=new ArrayList<>();
 		List<Double> weightOfDocuments = new ArrayList<>();
 		for(Document document:corpus.getDocuments()){
 			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
 			Iterable<String> strings=englishTokenStream.getTokens();
 			int i=1;
 			for(String string: strings){
-				//add tokens to diskIndex vocabulary
-				tokensList.add(string.trim());
 				for(String term:tokenProcessor.processToken(string)) {
 					if(!term.isEmpty()) {
 						index.addTerm(term, document.getId(), i);
@@ -334,13 +329,12 @@ public class PositionalInvertedIndexer  {
 			if (programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
 				chooseTokenProcessor();
 				//createIndex(path);
-				createIndex(path, index, corpus, tokenProcessor);
+				createIndex(path, corpus, tokenProcessor);
 			} else {
 				tokenProcessor = new AdvanceTokenProcessor();
 			}
 			diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
 			diskPositionalIndex.generateKGrams(3);
-			kgramIndex=diskPositionalIndex.getKGrams();
 			soudnexpositionalindex=new SoundexPositionalIndex(path.toString()+File.separator+"index");
 		}
 		catch (IOException e)
@@ -390,7 +384,7 @@ public class PositionalInvertedIndexer  {
 		return null;
 	}
 	//public static DocumentCorpus createIndex(Path path){
-	public static DocumentCorpus createIndex(Path path,Index index, DocumentCorpus corpus, TokenProcessor tokenProcessor){
+	public static DocumentCorpus createIndex(Path path, DocumentCorpus corpus, TokenProcessor tokenProcessor){
 
 		diskIndexWriter = new DiskIndexWriter(path.toString()
 				+File.separator+"index");
