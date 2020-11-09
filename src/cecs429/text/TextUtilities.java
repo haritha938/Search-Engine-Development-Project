@@ -1,6 +1,8 @@
 package cecs429.text;
 
 import cecs429.index.Index;
+import cecs429.query.Query;
+import cecs429.query.TermLiteral;
 
 import java.util.*;
 
@@ -9,7 +11,10 @@ import java.util.*;
  */
 public class TextUtilities {
     int k=3;
-
+    TokenProcessor tokenProcessor;
+    public TextUtilities(TokenProcessor tokenProcessor){
+        this.tokenProcessor = tokenProcessor;
+    }
     /**
      * @return the string/list of strings that have minimum edits to transform from @param source where
      * @param source is either miss spelled term or a term with postings below threshold,
@@ -21,7 +26,7 @@ public class TextUtilities {
         int minDistance = Integer.MAX_VALUE;
         for(String token:possibleStrings){
             int calculatedDistance = editDistance(source,token);
-            if(calculatedDistance<minDistance && minDistance!=0){
+            if(minDistance >0 && calculatedDistance<minDistance && minDistance!=0){
                 suggestions.clear();
                 suggestions.add(token);
                 minDistance = calculatedDistance;
@@ -72,7 +77,7 @@ public class TextUtilities {
      * @param word by considering the data set
      * @param index
      */
-    public String getSuggestion(String word, Index index){
+    public String getSuggestion(String word, Index index,int postingsThreshold){
         String suggestion=word;
         List<String> commonStringsList = new ArrayList<>();
         List<String> stringList = getKGrams(word);
@@ -93,11 +98,15 @@ public class TextUtilities {
          */
         int maxPostings = Integer.MIN_VALUE;
         for(String leastEditedString:editDistance(word,commonStringsList)){
-            int postingListSize = index.getPostingsWithOutPositions(leastEditedString).size();
+            Query query = new TermLiteral(leastEditedString,tokenProcessor,false);
+            int postingListSize = query.getPostings(index).size();
             if(maxPostings<postingListSize){
                 maxPostings = postingListSize;
                 suggestion = leastEditedString;
             }
+        }
+        if(maxPostings<=postingsThreshold){
+            suggestion="";
         }
         return suggestion.trim();
     }

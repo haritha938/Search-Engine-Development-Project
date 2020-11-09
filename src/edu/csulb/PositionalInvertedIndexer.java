@@ -48,7 +48,7 @@ public class PositionalInvertedIndexer  {
 			query=reader.readLine();
 			String documentName=null;
 			boolean found;
-			while (query.length()>0) {
+			start:while (query.length()>0) {
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
@@ -179,9 +179,15 @@ public class PositionalInvertedIndexer  {
 								System.out.println(document.getTitle() + " (\"" + document.getDocumentName() + "\") Calculated Accumulator value: " + accumulator.getPriority());
 							}
 							System.out.println("Total number of documents fetched: " + rankedQueries.size());
-							//TODO: Add prompt as y/n to search directly with corrected spelling
-							if(!query.equals(searchResult.getSuggestedString()))
-								System.out.println("Would you like to search with following query for better result: " + searchResult.getSuggestedString());
+							if(!query.equals(searchResult.getSuggestedString())) {
+								System.out.println("\""+searchResult.getSuggestedString() +"\" may yield better search results for given query" +
+										"\n would like to try? (y/n)");
+								query = reader.readLine();
+								if(query.equalsIgnoreCase("y")) {
+									query = searchResult.getSuggestedString();
+									continue start;
+								}
+							}
 							while (true) {
 								System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
 								documentName = reader.readLine();
@@ -218,8 +224,15 @@ public class PositionalInvertedIndexer  {
 							}
 						} else {
 							System.out.println("No such text can be found in the Corpus!");
-							if(!query.equals(searchResult.getSuggestedString()))
-								System.out.println("Would you like to search with following query for better result: " + searchResult.getSuggestedString());
+							if(!query.equals(searchResult.getSuggestedString())) {
+								System.out.println("\""+searchResult.getSuggestedString() +"\" may yield better search results for given query" +
+										"\n would like to try? (y/n)");
+								query = reader.readLine();
+								if(query.equalsIgnoreCase("y")) {
+									query = searchResult.getSuggestedString();
+									continue start;
+								}
+							}
 						}
 					}
 				}

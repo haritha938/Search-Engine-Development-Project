@@ -30,9 +30,9 @@ public class RankedQueryParser {
     }
 
     public SearchResult getPostings(String query) {
-        StringBuilder suggestion = new StringBuilder();
+        StringBuilder querySuggestion = new StringBuilder();
         SearchResult searchAcknowledgment;
-        TextUtilities textUtilities = new TextUtilities();
+        TextUtilities textUtilities = new TextUtilities(tokenProcessor);
         List<Accumulator> rankedSearchResult = new ArrayList<>();
         File file = new File(path, "docWeights.bin");
         Queue<Accumulator> rankedPostings = new PriorityQueue<>(Comparator.comparingDouble(a -> -1 * a.priority));
@@ -46,17 +46,25 @@ public class RankedQueryParser {
                         : tokenProcessor.processToken(searchToken).get(0);
                 postingList = diskIndex.getPostingsWithOutPositions(searchTerm);
                 if (postingList == null) {
-                    suggestion.append(" ").append(textUtilities.getSuggestion(searchTerm, diskIndex));
+                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex,0);
+                    if(suggestion.equals(""))
+                        querySuggestion.append(" ").append(searchToken);
+                    else
+                        querySuggestion.append(" ").append(suggestion);
                     continue;
                 } else if (postingList.size() < 10) {
-                    suggestion.append(" ").append(textUtilities.getSuggestion(searchTerm, diskIndex));
+                    String suggestion = textUtilities.getSuggestion(searchTerm, diskIndex, postingList.size());
+                    if(suggestion.equals(""))
+                        querySuggestion.append(" ").append(searchToken);
+                    else
+                        querySuggestion.append(" ").append(suggestion);
                 } else {
-                    suggestion.append(" ").append(searchToken);
+                    querySuggestion.append(" ").append(searchToken);
                 }
             }else {
                 Query q = new WildcardLiteral(searchToken.trim(), tokenProcessor, false);
                 postingList = q.getPostings(diskIndex);
-                suggestion.append(" ").append(searchToken);
+                querySuggestion.append(" ").append(searchToken);
             }
             double wqt = Math.log(1 + (((double) sizeOfCorpus) / postingList.size()));
             for (Posting posting : postingList) {
@@ -83,7 +91,7 @@ public class RankedQueryParser {
         for (int i = 0; i < Math.min(limit, documentAccumulatorMap.size()); i++) {
             rankedSearchResult.add(rankedPostings.poll());
         }
-        searchAcknowledgment = new SearchResult(suggestion.toString().trim(), rankedSearchResult);
+        searchAcknowledgment = new SearchResult(querySuggestion.toString().trim(), rankedSearchResult);
         return searchAcknowledgment;
         }
     }
