@@ -328,8 +328,7 @@ public class PositionalInvertedIndexer  {
 			String programMode = reader.readLine();
 			if (programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
 				chooseTokenProcessor();
-				//createIndex(path);
-				createIndex(path,index, corpus, tokenProcessor);
+				createIndex(path, corpus, tokenProcessor);
 			} else {
 				tokenProcessor = new AdvanceTokenProcessor();
 			}
@@ -364,7 +363,7 @@ public class PositionalInvertedIndexer  {
 				,path.toString()+File.separator+"index"
 				,limit
 				,tokenProcessor);
-		SearchResult searchResult = rankedQueryParser.getPostings(query.toLowerCase());
+		SearchResult searchResult = rankedQueryParser.getPostings(query);
 		return  searchResult;
 	}
 
@@ -383,13 +382,12 @@ public class PositionalInvertedIndexer  {
 			return resultPostings;
 		return null;
 	}
-	//public static DocumentCorpus createIndex(Path path){
-	public static DocumentCorpus createIndex(Path path,Index index, DocumentCorpus corpus, TokenProcessor tokenProcessor){
+
+	public static DocumentCorpus createIndex(Path path, DocumentCorpus corpus, TokenProcessor tokenProcessor){
 
 		diskIndexWriter = new DiskIndexWriter(path.toString()
 				+File.separator+"index");
 		soundexdiskwriter=new SoundexDiskIndexWriter(path.toString()+File.separator+"index");
-		//sIndexWriter=new SoundexIndexWriter(path.toString()+File.separator+"index");
 		long startTime=System.nanoTime();
 		index = indexCorpus(corpus,tokenProcessor);
 		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
