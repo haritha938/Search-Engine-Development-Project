@@ -49,18 +49,18 @@ public class SoundexTest {
         //Testing single term query
         query1 = "Robert";
         List<Integer> ExpectedDoucmentListForQuery1 = new ArrayList<>();
-        ExpectedDoucmentListForQuery1.add(0);
         ExpectedDoucmentListForQuery1.add(1);
+        ExpectedDoucmentListForQuery1.add(2);
         //Testing AND query
         query2 = "Rupert";
         List<Integer> ExpectedDoucmentListForQuery2 = new ArrayList<>();
-        ExpectedDoucmentListForQuery2.add(0);
         ExpectedDoucmentListForQuery2.add(1);
+        ExpectedDoucmentListForQuery2.add(2);
         //Testing OR query
         query3 = "Mark";
         List<Integer> ExpectedDoucmentListForQuery3 = new ArrayList<>();
-        ExpectedDoucmentListForQuery3.add(0);
-        ExpectedDoucmentListForQuery3.add(2);
+        ExpectedDoucmentListForQuery3.add(1);
+        ExpectedDoucmentListForQuery3.add(3);
         //Testing query that returns null
         query4 = "call";
         List<Integer> ExpectedDoucmentListForQuery4=new ArrayList<>();
@@ -76,19 +76,16 @@ public class SoundexTest {
         //IdentifyCorpus and CreateIndex --using same methods from the project..but providing params so as to access the test corpus
         DirectoryCorpus corpus = DirectoryCorpus.loadDirectory(Paths.get("./files"));
 
-        Class[] arg = new Class[4];
+        Class[] arg = new Class[3];
         arg[0] = Path.class;
-        arg[1]=Index.class;
-        arg[2]=DocumentCorpus.class;
-        arg[3]=TokenProcessor.class;
+        arg[1]=DocumentCorpus.class;
+        arg[2]=TokenProcessor.class;
         testSoundexIndex=new SoundexIndex();
         try {
             Method method = PositionalInvertedIndexer.class.getDeclaredMethod("createIndex", arg);
             method.setAccessible(true);
-            method.invoke(PositionalInvertedIndexer.class,Paths.get("./files"),testIndex,corpus,tokenProcessor);
+            method.invoke(PositionalInvertedIndexer.class,Paths.get("./files"),corpus,tokenProcessor);
             diskPositionalTestIndex = new DiskPositionalIndex(Paths.get("./files").toString() + File.separator + "index");
-           // diskPositionalTestIndex.generateKGrams(3);
-            //kgramIndex= diskPositionalTestIndex.getKGrams();
             // getting the soundex index
             testSoundexIndex=PositionalInvertedIndexer.getSoundexIndex();
 

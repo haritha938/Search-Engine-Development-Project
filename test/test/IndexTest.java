@@ -35,15 +35,14 @@ public class IndexTest {
         //IdentifyCorpus and CreateIndex --using same methods from the project..but providing params so as to access the test corpus
        DirectoryCorpus corpus = DirectoryCorpus.loadDirectory(Paths.get("./files"));
 
-        Class[] arg = new Class[4];
+        Class[] arg = new Class[3];
         arg[0] =Path.class;
-        arg[1]=Index.class;
-        arg[2]=DocumentCorpus.class;
-        arg[3]=TokenProcessor.class;
+        arg[1]=DocumentCorpus.class;
+        arg[2]=TokenProcessor.class;
         try {
            Method method = PositionalInvertedIndexer.class.getDeclaredMethod("createIndex", arg);
             method.setAccessible(true);
-            method.invoke(PositionalInvertedIndexer.class,Paths.get("./files"),index,corpus,tokenProcessor);
+            method.invoke(PositionalInvertedIndexer.class,Paths.get("./files"),corpus,tokenProcessor);
             diskPositionalTestIndex = new DiskPositionalIndex(Paths.get("./files").toString() + File.separator + "index");
             diskPositionalTestIndex.generateKGrams(3);
             kgramIndex= diskPositionalTestIndex.getKGrams();
@@ -172,8 +171,6 @@ public class IndexTest {
             for(String key: expectedIndex.keySet())
             {
                 //Displayed the key for the mismatched values in  expectedIndex and diskPositionalTestIndex
-             System.out.println("key:"+key);
-             System.out.println("Expected:"+expectedIndex.get(key)+" Actual:"+ diskPositionalTestIndex.getPostingsWithOutPositions(key));
                 Assert.assertEquals("Mismatch at Index key,"+key, expectedIndex.get(key), diskPositionalTestIndex.getPostingsWithPositions(key));
 
             }

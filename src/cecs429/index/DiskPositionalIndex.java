@@ -15,11 +15,21 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DiskPositionalIndex implements Index{
     static String path;
+    DB db;
+    ConcurrentMap<String, Long> diskIndex;
+    File file;
     Map<String,List<String>> kgramIndex;
 
     public DiskPositionalIndex(String path){
         this.path = path;
         kgramIndex=new HashMap<>();
+        db = DBMaker
+                .fileDB(path + File.separator + "positionalIndex.db")
+                .fileMmapEnable()
+                .make();
+        diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                .open();
+        file = new File(path, "Postings.bin");
     }
 
     /**
@@ -28,18 +38,20 @@ public class DiskPositionalIndex implements Index{
      */
     @Override
     public List<Posting> getPostingsWithPositions(String term) {
-        DB db;
-        ConcurrentMap<String, Long> diskIndex;
-        File file;
 
-        db = DBMaker
-                .fileDB(path + File.separator + "positionalIndex.db")
-                .fileMmapEnable()
-                .make();
-        diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                .open();
+        if (db.isClosed()) {
 
-        file = new File(path, "Postings.bin");
+            db = DBMaker
+                    .fileDB(path + File.separator + "positionalIndex.db")
+                    .fileMmapEnable()
+                    .make();
+            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .open();
+
+            file = new File(path, "Postings.bin");
+        }
+
+       // file = new File(path, "Postings.bin");
 
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
@@ -92,18 +104,18 @@ public class DiskPositionalIndex implements Index{
      */
     @Override
     public List<Posting> getPostingsWithOutPositions(String term) {
-        DB db;
-        ConcurrentMap<String, Long> diskIndex;
-        File file;
 
-        db = DBMaker
-                .fileDB(path + File.separator + "positionalIndex.db")
-                .fileMmapEnable()
-                .make();
-        diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                .open();
+        if (db.isClosed()) {
 
-        file = new File(path, "Postings.bin");
+            db = DBMaker
+                    .fileDB(path + File.separator + "positionalIndex.db")
+                    .fileMmapEnable()
+                    .make();
+            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .open();
+
+            file = new File(path, "Postings.bin");
+        }
 
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
