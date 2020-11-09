@@ -29,6 +29,7 @@ public class DiskIndexWriter {
         File termsFile = new File(path,"terms.bin");
         File postingsFile = new File(path,"Postings.bin");
         File mapDBFile = new File(path,"positionalIndex.db");
+       // File vocabFile=new File(path,"vocabulary.bin");
         postingsFile.getParentFile().mkdirs();
         if(postingsFile.exists())
             postingsFile.delete();
@@ -38,6 +39,10 @@ public class DiskIndexWriter {
         if(termsFile.exists()) {
             termsFile.delete();
         }
+      /*  if(vocabFile.exists())
+        {
+            vocabFile.delete();
+        }*/
 
         List<String> sortedTerms = new ArrayList<>(index.getTerms());
         Collections.sort(sortedTerms);
@@ -162,7 +167,7 @@ public class DiskIndexWriter {
         Map<String,List<Posting>> soundexPostingsIndex=soundexindex.getIndex();
         List<String> sortedTerms=new ArrayList<>(soundexindex.getIndex().keySet());
         Collections.sort(sortedTerms);
-        try(DB db= DBMaker.fileDB(path + File.separator + "soundexPositions.db").fileMmapEnable().make()) {
+        try{DB db= DBMaker.fileDB(path + File.separator + "soundexPositions.db").fileMmapEnable().make();
             ConcurrentMap<String, Long> diskIndex = db.hashMap("address", Serializer.STRING, Serializer.LONG).create();
 
             try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
@@ -179,6 +184,7 @@ public class DiskIndexWriter {
                     }
                 }
             }
+            db.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -209,9 +215,19 @@ public class DiskIndexWriter {
     public void addtoVocb(List<String> vocabList)
     {
         try {
-            File vocabFile=new File(path,"vocabulary.bin");
-            DataOutputStream vocabOutputStream=new DataOutputStream(new FileOutputStream(vocabFile));
 
+            File vocabFile=new File(path,"vocabulary.bin");
+            if(vocabFile.exists())
+            {
+                vocabFile.delete();
+            }
+            else
+
+            {
+                System.out.println("Goind to create file in path,"+ vocabFile.getPath());
+                vocabFile.getParentFile().mkdirs();
+            }
+            DataOutputStream vocabOutputStream=new DataOutputStream(new FileOutputStream(vocabFile));
             for(String token:vocabList)
             {
                 //Convert token to bytes
@@ -227,6 +243,7 @@ public class DiskIndexWriter {
         }
         catch (IOException e) {
             e.printStackTrace();
+            e.getCause().getClass();
         }
     }
 }

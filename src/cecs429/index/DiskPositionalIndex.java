@@ -36,7 +36,7 @@ public class DiskPositionalIndex implements Index{
                 .make();
         diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                 .open();
-        file = new File(path, "Postings.bin");
+       file = new File(path, "Postings.bin");
     }
 
     /**
@@ -57,6 +57,7 @@ public class DiskPositionalIndex implements Index{
 
             file = new File(path, "Postings.bin");
         }
+       //
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {
 
@@ -120,6 +121,7 @@ public class DiskPositionalIndex implements Index{
 
             file = new File(path, "Postings.bin");
         }
+       //
 
         List<Posting> postingList = null;
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r")) {

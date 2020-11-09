@@ -34,24 +34,7 @@ public class PositionalInvertedIndexer  {
 		//PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		reader = new BufferedReader(new InputStreamReader(System.in));
 		try {
-			System.out.println("Please enter your desired search directory...");
-			path = Paths.get(reader.readLine());
-			corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
-			corpusSize = corpus.getCorpusSize();
-			System.out.println("Would you like to create an Index or run the queries? Enter \"Y\" to create an index and \"N\" to run queries ");
-			String programMode = reader.readLine();
-			if(programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
-				chooseTokenProcessor();
-				createIndex(path);
-			}
-			else{
-				tokenProcessor=new AdvanceTokenProcessor();
-			}
-			diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
-			diskPositionalIndex.generateKGrams(3);
-			kgramIndex=diskPositionalIndex.getKGrams();
-			//soundexdiskreader=new SoundexDiskReader(path.toString()+File.separator+"index");
-
+			loadCorpusAndCreateIndex();
 			System.out.println("Entering query mode");
 			System.out.println("Which mode would you like to search:");
 			System.out.println("1.Boolean retrieval");
@@ -67,11 +50,12 @@ public class PositionalInvertedIndexer  {
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
-					chooseTokenProcessor();
+					loadCorpusAndCreateIndex();
+					/*chooseTokenProcessor();
 					path = Paths.get(query.substring(query.indexOf(' ') + 1));
 					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 					corpusSize = corpus.getCorpusSize();
-					createIndex(path);
+					createIndex(path,index,corpus,tokenProcessor);*/
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
@@ -128,11 +112,11 @@ public class PositionalInvertedIndexer  {
 					}
 				}
 				else if (query.equals(":vocab")) {
-					index.getVocabulary()
+					diskPositionalIndex.getVocabulary()
 							.stream()
 							.limit(1000)
 							.forEach(System.out::println);
-					System.out.println("Size of the vocabulary is" + index.getVocabulary().size());
+					System.out.println("Size of the vocabulary is" + diskPositionalIndex.getVocabulary().size());
 				}
 				else {
 					if (queryMode.equals("1")){
@@ -320,6 +304,33 @@ public class PositionalInvertedIndexer  {
 		return index;
 	}
 
+
+	public static  void loadCorpusAndCreateIndex()
+	{
+		try {
+			System.out.println("Please enter your desired search directory...");
+			path = Paths.get(reader.readLine());
+			corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
+			corpusSize = corpus.getCorpusSize();
+			System.out.println("Would you like to create an Index or run the queries? Enter \"Y\" to create an index and \"N\" to run queries ");
+			String programMode = reader.readLine();
+			if (programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
+				chooseTokenProcessor();
+				//createIndex(path);
+				createIndex(path, index, corpus, tokenProcessor);
+			} else {
+				tokenProcessor = new AdvanceTokenProcessor();
+			}
+			diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+			diskPositionalIndex.generateKGrams(3);
+			kgramIndex=diskPositionalIndex.getKGrams();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+
 	// Returns the soundexIndex instance variable.
 	public static SoundexIndex getSoundexIndex(){
 		return soundexindex;
@@ -360,7 +371,9 @@ public class PositionalInvertedIndexer  {
 			return resultPostings;
 		return null;
 	}
-	public static DocumentCorpus createIndex(Path path){
+	//public static DocumentCorpus createIndex(Path path){
+	public static DocumentCorpus createIndex(Path path,Index index, DocumentCorpus corpus, TokenProcessor tokenProcessor){
+
 		diskIndexWriter = new DiskIndexWriter(path.toString()
 				+File.separator+"index");
 		//sIndexWriter=new SoundexIndexWriter(path.toString()+File.separator+"index");
