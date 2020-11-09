@@ -112,8 +112,6 @@ public class PositionalInvertedIndexer  {
 			path = Paths.get(reader.readLine());
 			corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
 			corpusSize = corpus.getCorpusSize();
-			diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
-			soudnexpositionalindex=new SoundexPositionalIndex(path.toString()+File.separator+"index");
 			System.out.println("Would you like to create an Index or run the queries? Enter \"Y\" to create an index and \"N\" to run queries ");
 			String programMode = reader.readLine();
 			if (programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
@@ -121,6 +119,8 @@ public class PositionalInvertedIndexer  {
 				createIndex(path, corpus, tokenProcessor);
 			} else {
 				tokenProcessor = new AdvanceTokenProcessor();
+				diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+				soudnexpositionalindex=new SoundexPositionalIndex(path.toString()+File.separator+"index");
 				diskPositionalIndex.generateKGrams(3);
 				runQueries();
 			}
