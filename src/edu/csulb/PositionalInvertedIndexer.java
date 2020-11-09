@@ -364,7 +364,7 @@ public class PositionalInvertedIndexer  {
 				,path.toString()+File.separator+"index"
 				,limit
 				,tokenProcessor);
-		SearchResult searchResult = rankedQueryParser.getPostings(query);
+		SearchResult searchResult = rankedQueryParser.getPostings(query.toLowerCase());
 		return  searchResult;
 	}
 
