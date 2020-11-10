@@ -40,7 +40,7 @@ public class SoundexDiskIndexWriter {
         try(DB db= DBMaker.fileDB(path + File.separator + "soundexPositions.db").fileMmapEnable().make();
             DataOutputStream outputStreamForTerms = new DataOutputStream(new FileOutputStream(termsFile));
             DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
-            ConcurrentMap<String, Long> diskIndex = db.hashMap("address", Serializer.STRING, Serializer.LONG).create();
+            ConcurrentMap<String, Long> diskIndex = db.treeMap("address", Serializer.STRING, Serializer.LONG).create();
             for (String term : sortedTerms) {
                 byte arr[]=term.getBytes(StandardCharsets.UTF_8);
                 //write size of term

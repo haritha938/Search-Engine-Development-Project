@@ -25,7 +25,7 @@ public class SoundexPositionalIndex implements SoundexIndexInterface{
                 .fileMmapEnable()
                 .make();
         ConcurrentMap<String, Long> sdiskIndex = soundexDb
-                .hashMap("address", Serializer.STRING, Serializer.LONG)
+                .treeMap("address", Serializer.STRING, Serializer.LONG)
                 .open();
         File soundexFile = new File(path,"SoundexPostings.bin");
 
