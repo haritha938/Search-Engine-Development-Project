@@ -30,7 +30,6 @@ public class PositionalInvertedIndexer  {
 
 
 	public static void main(String[] args) {
-		//PositionalInvertedIndex positionalInvertedIndex = new PositionalInvertedIndex();
 		reader = new BufferedReader(new InputStreamReader(System.in));
 		loadCorpusAndCreateIndex();
 	}
@@ -338,9 +337,7 @@ public class PositionalInvertedIndexer  {
 							System.out.println("No such text can be found in the Corpus!");
 						}
 					}else {
-						/*TODO: After disk storage of index an option similar to property file
-							has to be created to store token processor chosen.
-						 */
+
 						SearchResult searchResult = getRankedPostings(query,diskPositionalIndex,tokenProcessor);
 						List<Accumulator> rankedQueries = searchResult.getSearchResults();
 						if (rankedQueries != null && rankedQueries.size() != 0) {

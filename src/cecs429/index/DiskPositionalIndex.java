@@ -32,7 +32,6 @@ public class DiskPositionalIndex implements Index{
             diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .open();
         }
-
     }
 
     /**
