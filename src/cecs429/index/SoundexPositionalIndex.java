@@ -5,23 +5,18 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 public class SoundexPositionalIndex implements SoundexIndexInterface{
-    static String path;
-    DB db;
+    String path;
     public SoundexPositionalIndex(String path){
         this.path = path;
-
     }
-
 
     @Override
     public List<Posting> getPostingsWithOutPositions(String term) {
@@ -62,8 +57,30 @@ public class SoundexPositionalIndex implements SoundexIndexInterface{
         return postingList;
     }
 
+    //TODO
     @Override
     public List<String> getTerms() {
-        return null;
+        List<String> soundexHashTerms=new ArrayList<>();
+        File vocabFile = new File(path, "soundexHashTerms.bin");
+        String term;
+
+        try (DataInputStream dataInputStream=new DataInputStream(new FileInputStream(vocabFile))){
+            while (dataInputStream.available()>0) {
+                byte[] readIntBuffer = new byte[4];
+                //read term length
+                dataInputStream.read(readIntBuffer, 0, readIntBuffer.length);
+                int termLength = ByteBuffer.wrap(readIntBuffer).getInt();
+                byte[] readCharBuffer = new byte[termLength];
+                //read term in bytes
+                dataInputStream.read(readCharBuffer, 0, readCharBuffer.length);
+                term = new String(readCharBuffer, StandardCharsets.UTF_8);
+                soundexHashTerms.add(term);
+            }
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return soundexHashTerms;
     }
 }

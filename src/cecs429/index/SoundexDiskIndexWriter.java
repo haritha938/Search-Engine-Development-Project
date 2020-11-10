@@ -4,10 +4,8 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
 
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,40 +19,49 @@ public class SoundexDiskIndexWriter {
         List<Long> locations= new LinkedList<>();
         File postingsFile=new File(path,"SoundexPostings.bin");
         File mapDBFile=new File(path,"soundexPositions.db");
+        File termsFile = new File(path,"soundexHashTerms.bin");
         postingsFile.getParentFile().mkdir();
-        if(postingsFile.exists()){
+        if(postingsFile.exists())
             postingsFile.delete();
+        if(mapDBFile.exists())
             mapDBFile.delete();
+        if(termsFile.exists())
+            termsFile.delete();
+        try {
+            postingsFile.createNewFile();
+            termsFile.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         List<String> sortedTerms= soundexindex.getTerms();
         //System.out.println(sortedTerms.size());
         Collections.sort(sortedTerms);
-        try(DB db= DBMaker.fileDB(path + File.separator + "soundexPositions.db").fileMmapEnable().make()) {
+        try(DB db= DBMaker.fileDB(path + File.separator + "soundexPositions.db").fileMmapEnable().make();
+            DataOutputStream outputStreamForTerms = new DataOutputStream(new FileOutputStream(termsFile));
+            DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
             ConcurrentMap<String, Long> diskIndex = db.hashMap("address", Serializer.STRING, Serializer.LONG).create();
-
-            try (DataOutputStream outputStream = new DataOutputStream(new FileOutputStream(postingsFile))) {
-                postingsFile.createNewFile();
-                for (String term : sortedTerms) {
-                    List<Posting> postingList = soundexindex.getPostinglist(term);
-                    if(postingList!=null){
-                        locations.add((long) outputStream.size());
-                        diskIndex.put(term,(long)outputStream.size());
-                        outputStream.writeInt(postingList.size());
-                        int previousDocId=0;
-                        for(Posting posting: postingList){
-                            outputStream.writeInt(posting.getDocumentId()-previousDocId);
-                            previousDocId=posting.getDocumentId();
-                        }
+            for (String term : sortedTerms) {
+                byte arr[]=term.getBytes(StandardCharsets.UTF_8);
+                //write size of term
+                outputStreamForTerms.writeInt(arr.length);
+                //Writing term to terms.bin;
+                outputStreamForTerms.write(arr);
+                List<Posting> postingList = soundexindex.getPostinglist(term);
+                if(postingList!=null){
+                    locations.add((long) outputStream.size());
+                    diskIndex.put(term,(long)outputStream.size());
+                    outputStream.writeInt(postingList.size());
+                    int previousDocId=0;
+                    for(Posting posting: postingList){
+                        outputStream.writeInt(posting.getDocumentId()-previousDocId);
+                        previousDocId=posting.getDocumentId();
                     }
-
-
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         return locations;
-
     }
 }
