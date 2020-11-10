@@ -105,8 +105,9 @@ public class PositionalInvertedIndexer  {
 	}
 
 
-	public static  void loadCorpusAndCreateIndex()
+	public static  boolean loadCorpusAndCreateIndex()
 	{
+		//boolean flag=false;
 		try {
 			System.out.println("Please enter your desired search directory...");
 			path = Paths.get(reader.readLine());
@@ -118,17 +119,32 @@ public class PositionalInvertedIndexer  {
 				tokenProcessor = new AdvanceTokenProcessor();
 				createIndex(path, corpus, tokenProcessor);
 			} else {
-				tokenProcessor = new AdvanceTokenProcessor();
-				diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
-				soudnexpositionalindex=new SoundexPositionalIndex(path.toString()+File.separator+"index");
-				diskPositionalIndex.generateKGrams(3);
-				runQueries();
+				if(new File(path.toString() + File.separator + "index").exists()) {
+					if(new File(path.toString() + File.separator + "index").listFiles().length<9)
+					{
+						System.out.println("No Index files are available. Create an Index!");
+						return true;
+					}
+					else {
+						tokenProcessor = new AdvanceTokenProcessor();
+						diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+						soudnexpositionalindex = new SoundexPositionalIndex(path.toString() + File.separator + "index");
+						diskPositionalIndex.generateKGrams(3);
+						runQueries();
+					}
+				}
+				else
+				{
+					System.out.println("No Index files are available. Create an Index!");
+					return true;
+				}
 			}
 		}
 		catch (IOException e)
 		{
 			e.printStackTrace();
 		}
+		return false;
 	}
 
 	// Returns the soundexIndex instance variable.
@@ -208,12 +224,8 @@ public class PositionalInvertedIndexer  {
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
-					loadCorpusAndCreateIndex();
-					/*chooseTokenProcessor();
-					path = Paths.get(query.substring(query.indexOf(' ') + 1));
-					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
-					corpusSize = corpus.getCorpusSize();
-					createIndex(path,index,corpus,tokenProcessor);*/
+					if(loadCorpusAndCreateIndex())
+						break;
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
@@ -326,7 +338,6 @@ public class PositionalInvertedIndexer  {
 						/*TODO: After disk storage of index an option similar to property file
 							has to be created to store token processor chosen.
 						 */
-						//tokenProcessor = new AdvanceTokenProcessor();
 						SearchResult searchResult = getRankedPostings(query,diskPositionalIndex,tokenProcessor);
 						List<Accumulator> rankedQueries = searchResult.getSearchResults();
 						if (rankedQueries != null && rankedQueries.size() != 0) {
@@ -334,7 +345,6 @@ public class PositionalInvertedIndexer  {
 								Document document = corpus.getDocument(accumulator.getDocumentId());
 								System.out.println(document.getTitle() + " (\"" + document.getDocumentName() + "\") Calculated Accumulator value: " + accumulator.getPriority());
 							}
-							System.out.println("Total number of documents fetched: " + rankedQueries.size());
 							if(!query.equals(searchResult.getSuggestedString())) {
 								System.out.println("\""+searchResult.getSuggestedString() +"\" may yield better search results for given query" +
 										"\n would like to try? (y/n)");
