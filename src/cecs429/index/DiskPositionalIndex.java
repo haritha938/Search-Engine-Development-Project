@@ -25,13 +25,12 @@ public class DiskPositionalIndex implements Index{
         file = new File(path, "Postings.bin");
         file.mkdirs();
         kgramIndex=new HashMap<>();
-        if(db==null) {
-            db = DBMaker
-                    .fileDB(path + File.separator + "positionalIndex.db")
-                    .fileMmapEnable().transactionEnable().make();
-            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                    .open();
-        }
+        db = DBMaker
+                .fileDB(path + File.separator + "positionalIndex.db")
+                .fileMmapEnable()
+                .make();
+        diskIndex = db.treeMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                .open();
     }
 
     /**
@@ -47,7 +46,7 @@ public class DiskPositionalIndex implements Index{
                     .fileDB(path + File.separator + "positionalIndex.db")
                     .fileMmapEnable()
                     .make();
-            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+            diskIndex = db.treeMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .open();
 
             file = new File(path, "Postings.bin");
@@ -113,7 +112,7 @@ public class DiskPositionalIndex implements Index{
                     .fileDB(path + File.separator + "positionalIndex.db")
                     .fileMmapEnable()
                     .make();
-            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+            diskIndex = db.treeMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .open();
 
             file = new File(path, "Postings.bin");
@@ -191,7 +190,7 @@ public class DiskPositionalIndex implements Index{
                     .fileMmapEnable()
                     .make();
             ConcurrentMap<String, Long> kgramDiskIndex = kgramDb
-                    .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .treeMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .open();
 
             kgramFile = new File(path, "kgrams.bin");

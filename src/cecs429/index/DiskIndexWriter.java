@@ -45,7 +45,7 @@ public class DiskIndexWriter {
                 .fileMmapEnable()
                 .make()) {
             ConcurrentMap<String, Long> diskIndex = db
-                    .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .treeMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .create();
 
             DataOutputStream outputStream;
@@ -114,7 +114,7 @@ public class DiskIndexWriter {
                 .fileMmapEnable()
                 .make()) {
             ConcurrentMap<String, Long> diskIndex = db
-                    .hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .treeMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
                     .create();
             DataOutputStream outputStream;
             try {
