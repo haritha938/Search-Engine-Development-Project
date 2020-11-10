@@ -107,7 +107,7 @@ public class PositionalInvertedIndexer  {
 
 	public static  boolean loadCorpusAndCreateIndex()
 	{
-		//boolean flag=false;
+
 		try {
 			System.out.println("Please enter your desired search directory...");
 			path = Paths.get(reader.readLine());
@@ -118,12 +118,13 @@ public class PositionalInvertedIndexer  {
 			if (programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
 				tokenProcessor = new AdvanceTokenProcessor();
 				createIndex(path, corpus, tokenProcessor);
+				return false;
 			} else {
 				if(new File(path.toString() + File.separator + "index").exists()) {
 					if(new File(path.toString() + File.separator + "index").listFiles().length<9)
 					{
 						System.out.println("No Index files are available. Create an Index!");
-						return true;
+						return false;
 					}
 					else {
 						tokenProcessor = new AdvanceTokenProcessor();
@@ -136,7 +137,7 @@ public class PositionalInvertedIndexer  {
 				else
 				{
 					System.out.println("No Index files are available. Create an Index!");
-					return true;
+					return false;
 				}
 			}
 		}
@@ -144,7 +145,7 @@ public class PositionalInvertedIndexer  {
 		{
 			e.printStackTrace();
 		}
-		return false;
+		return true;
 	}
 
 	// Returns the soundexIndex instance variable.
@@ -224,7 +225,8 @@ public class PositionalInvertedIndexer  {
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
-					if(loadCorpusAndCreateIndex())
+					//if loadCorpusAndCreateIndex() returns false=> Implies that index is not available and user has chosen not to create one
+					if(!loadCorpusAndCreateIndex())
 						break;
 				}
 				else if(query.startsWith(":stem")){
@@ -268,6 +270,7 @@ public class PositionalInvertedIndexer  {
 										documentData = printDocument.read();
 									}
 									printDocument.close();
+									System.out.println();
 									found = true;
 								}
 							}

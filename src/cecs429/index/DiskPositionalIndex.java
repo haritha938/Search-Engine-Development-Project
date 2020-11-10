@@ -25,12 +25,14 @@ public class DiskPositionalIndex implements Index{
         file = new File(path, "Postings.bin");
         file.mkdirs();
         kgramIndex=new HashMap<>();
-        db = DBMaker
-                .fileDB(path + File.separator + "positionalIndex.db")
-                .fileMmapEnable()
-                .make();
-        diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
-                .open();
+        if(db==null) {
+            db = DBMaker
+                    .fileDB(path + File.separator + "positionalIndex.db")
+                    .fileMmapEnable().transactionEnable().make();
+            diskIndex = db.hashMap("vocabToAddress", Serializer.STRING, Serializer.LONG)
+                    .open();
+        }
+
     }
 
     /**
