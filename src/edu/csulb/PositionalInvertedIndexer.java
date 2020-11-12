@@ -49,6 +49,7 @@ public class PositionalInvertedIndexer  {
 				for(String term:tokenProcessor.processToken(string)) {
 					if(!term.isEmpty()) {
 						index.addTerm(term, document.getId(), i);
+						termToFreq.put(term,termToFreq.getOrDefault(termToFreq.get(term),0)+1);
 					}
 				}
 				i++;
@@ -57,18 +58,16 @@ public class PositionalInvertedIndexer  {
 						String term=tokenProcessor.normalization(splitString).toLowerCase();
 						if(!term.isEmpty()) {
 							index.addToVocab(term);
-							termToFreq.put(term,termToFreq.getOrDefault(termToFreq.get(term),0)+1);
 						}
 					}
 				}else{
 					String term=tokenProcessor.normalization(string).toLowerCase();
 					if(!term.isEmpty()) {
 						index.addToVocab(term);
-						termToFreq.put(term,termToFreq.getOrDefault(termToFreq.get(term),0)+1);
 					}
 				}
 			}
-			int wdt = 0;
+			double wdt = 0;
 			for(String termKey:termToFreq.keySet()){
 				wdt+=Math.pow(1+Math.log(termToFreq.get(termKey)),2);
 			}

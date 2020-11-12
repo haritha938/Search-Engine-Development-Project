@@ -26,11 +26,11 @@ public class TextUtilities {
         int minDistance = Integer.MAX_VALUE;
         for(String token:possibleStrings){
             int calculatedDistance = editDistance(source,token);
-            if(minDistance >0 && calculatedDistance<minDistance && minDistance!=0){
+            if(calculatedDistance < minDistance && calculatedDistance > 0){
                 suggestions.clear();
                 suggestions.add(token);
                 minDistance = calculatedDistance;
-            }else if(minDistance==calculatedDistance && minDistance!=0){
+            }else if( minDistance == calculatedDistance && calculatedDistance > 0){
                 suggestions.add(token);
             }
         }
