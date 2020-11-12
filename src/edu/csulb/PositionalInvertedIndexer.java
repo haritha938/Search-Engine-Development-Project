@@ -49,7 +49,7 @@ public class PositionalInvertedIndexer  {
 				for(String term:tokenProcessor.processToken(string)) {
 					if(!term.isEmpty()) {
 						index.addTerm(term, document.getId(), i);
-						termToFreq.put(term,termToFreq.getOrDefault(termToFreq.get(term),0)+1);
+						termToFreq.put(term,termToFreq.getOrDefault(term,0)+1);
 					}
 				}
 				i++;
