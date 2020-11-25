@@ -2,11 +2,9 @@ package cecs429.query;
 
 import cecs429.index.Index;
 import cecs429.index.Posting;
-import cecs429.index.TermDocumentIndex;
 import cecs429.text.TextUtilities;
 import cecs429.text.TokenProcessor;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -19,6 +17,7 @@ public class RankedQueryParser {
     int sizeOfCorpus;
     String path;
     int limit;
+    float wqtVocabThreshold;
     TokenProcessor tokenProcessor;
     int thresholdCheck;
     float jaccardCoefficintThreshold;
@@ -30,12 +29,11 @@ public class RankedQueryParser {
         readProperties();
     }
 
-    public SearchResult getPostings(String query) {
+    public SearchResult getPostings(String query,boolean isInexact) {
         StringBuilder querySuggestion = new StringBuilder();
         SearchResult searchAcknowledgment;
         TextUtilities textUtilities = new TextUtilities(tokenProcessor);
         List<Accumulator> rankedSearchResult = new ArrayList<>();
-        File file = new File(path, "docWeights.bin");
         Queue<Accumulator> rankedPostings = new PriorityQueue<>(Comparator.comparingDouble(a -> -1 * a.priority));
         Map<Integer, Accumulator> documentAccumulatorMap = new HashMap<>();
         String[] queryTerms = query.split(" +");
@@ -67,6 +65,10 @@ public class RankedQueryParser {
                     continue;
             }
             double wqt = Math.log(1 + (((double) sizeOfCorpus) / postingList.size()));
+            //If mode is inexact retrieval and wqt is less than threshold that term will be
+            //skipped for ranking the documents.
+            if(isInexact && wqt<wqtVocabThreshold)
+                continue;
             for (Posting posting : postingList) {
                 Accumulator accumulator = documentAccumulatorMap.getOrDefault(
                         posting.getDocumentId()
@@ -97,6 +99,7 @@ public class RankedQueryParser {
             limit = Integer.parseInt(prop.getProperty("numberOfRetrievalsForRankedQueries"));
             thresholdCheck = Integer.parseInt(prop.getProperty("documentFrequencyThreshold"));
             jaccardCoefficintThreshold = Float.parseFloat(prop.getProperty("jaccardCoefficientThreshold"));
+            wqtVocabThreshold = Float.parseFloat(prop.getProperty("vocabThreshold"));
         }catch (IOException e){
             e.printStackTrace();
         }

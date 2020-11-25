@@ -10,9 +10,11 @@ import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
@@ -31,7 +33,95 @@ public class PositionalInvertedIndexer  {
 
 	public static void main(String[] args) {
 		reader = new BufferedReader(new InputStreamReader(System.in));
-		loadCorpusAndCreateIndex();
+		System.out.println("1. Milestone 2 - for creating disk Index, Boolean queries and Ranked queries");
+		System.out.println("2. Milestone 3 - For Inexact Querying, Text classification etc");
+		try {
+			String input = reader.readLine();
+			if(input.equals("1"))
+				loadCorpusAndCreateIndex();
+			else
+				milestone3();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	static void milestone3(){
+		System.out.println("Following any of the below options");
+		System.out.println("1. Inexact retrieval");
+		String input="";
+		try {
+			input = reader.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(input.equals("1")) {
+			try {
+				System.out.println("Please enter the corpus path:");
+				path = Paths.get(reader.readLine());
+				corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
+				corpusSize = corpus.getCorpusSize();
+				tokenProcessor = new AdvanceTokenProcessor();
+				diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+				soudnexpositionalindex = new SoundexPositionalIndex(path.toString() + File.separator + "index");
+				diskPositionalIndex.generateKGrams(3);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			RankedQueryParser rankedQueryParser = new RankedQueryParser(diskPositionalIndex
+					, corpusSize
+					, path.toString() + File.separator + "index"
+					, tokenProcessor);
+
+			File queriesFile = new File(path.toString() + File.separator + "relevance" + File.separator + "queries");
+			try (FileReader queriesFileReader = new FileReader(queriesFile);
+				 BufferedReader queriesBufferedReader = new BufferedReader(queriesFileReader)) {
+				List<String> stringList = Files.readAllLines(Paths.get(path.toString() + File.separator + "relevance" + File.separator + "qrel"));
+				String query;
+				int i = 0;
+				double meanAveragePrecision = 0;
+				int countOfQueries = 0;
+				double totalTimeTOExecuteQueries = 0;
+				while ((query = queriesBufferedReader.readLine()) != null) {
+					double summationOfPrecision = 0;
+					int precisionCount = 1;
+					int resultCount = 1;
+					long startTime = System.nanoTime();
+					SearchResult searchResult = rankedQueryParser.getPostings(query, false);
+					long endTime = System.nanoTime();
+					totalTimeTOExecuteQueries += (float) (endTime - startTime);
+					List<Integer> documentsOfNthQuery = Arrays.stream(stringList.get(i)
+							.split(" +"))
+							.map(Integer::parseInt)
+							.collect(Collectors.toList());
+					for (Accumulator accumulator : searchResult.getSearchResults()) {
+						Document rankedRetrieval = corpus.getDocument(accumulator.getDocumentId());
+						int releventIndex = Collections.binarySearch(
+								documentsOfNthQuery
+								, Integer.parseInt(
+										rankedRetrieval.getDocumentName().substring(0, rankedRetrieval.getDocumentName().indexOf('.')))
+						);
+						if (releventIndex > 0) {
+							summationOfPrecision += (float) precisionCount / resultCount;
+							precisionCount++;
+							System.out.println("Relevant: " + rankedRetrieval.getDocumentName() + " at index " + resultCount);
+						}
+						resultCount++;
+					}
+					System.out.println(query + " Average precision is " + (summationOfPrecision / documentsOfNthQuery.size()));
+					meanAveragePrecision += summationOfPrecision / documentsOfNthQuery.size();
+					countOfQueries++;
+				}
+				System.out.println("Mean average precision for all the queries of given corpus is:" + meanAveragePrecision / countOfQueries);
+				double meanResponseTime = totalTimeTOExecuteQueries / (1000000 * 1000);
+				System.out.println("Mean Response time is:" + meanResponseTime / countOfQueries);
+				System.out.println("Throughput is:" + countOfQueries / meanResponseTime);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}//TODO: Here remaining options may be continued as if-else ladder
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
@@ -166,7 +256,7 @@ public class PositionalInvertedIndexer  {
 				,corpusSize
 				,path.toString()+File.separator+"index"
 				,tokenProcessor);
-		SearchResult searchResult = rankedQueryParser.getPostings(query);
+		SearchResult searchResult = rankedQueryParser.getPostings(query,false);
 		return  searchResult;
 	}
 
