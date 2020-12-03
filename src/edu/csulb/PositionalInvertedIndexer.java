@@ -87,7 +87,7 @@ public class PositionalInvertedIndexer  {
 					int precisionCount = 1;
 					int resultCount = 1;
 					long startTime = System.nanoTime();
-					SearchResult searchResult = rankedQueryParser.getPostings(query, false);
+					SearchResult searchResult = rankedQueryParser.getPostings(query, true);
 					long endTime = System.nanoTime();
 					totalTimeTOExecuteQueries += (float) (endTime - startTime);
 					List<Integer> documentsOfNthQuery = Arrays.stream(stringList.get(i)
@@ -113,9 +113,9 @@ public class PositionalInvertedIndexer  {
 					countOfQueries++;
 				}
 				System.out.println("Mean average precision for all the queries of given corpus is:" + meanAveragePrecision / countOfQueries);
-				double meanResponseTime = totalTimeTOExecuteQueries / (1000000 * 1000);
-				System.out.println("Mean Response time is:" + meanResponseTime / countOfQueries);
-				System.out.println("Throughput is:" + countOfQueries / meanResponseTime);
+				double totalResponseTime = totalTimeTOExecuteQueries / (1000000 * 1000);
+				System.out.println("Mean Response time is:" + totalResponseTime / countOfQueries);
+				System.out.println("Throughput is:" + countOfQueries / totalResponseTime);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
