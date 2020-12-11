@@ -101,7 +101,7 @@ public class PositionalInvertedIndexer  {
 								, Integer.parseInt(
 										rankedRetrieval.getDocumentName().substring(0, rankedRetrieval.getDocumentName().indexOf('.')))
 						);
-						if (releventIndex > 0) {
+						if (releventIndex >= 0) {
 							summationOfPrecision += (float) precisionCount / resultCount;
 							precisionCount++;
 							System.out.println("Relevant: " + rankedRetrieval.getDocumentName() + " at index " + resultCount);
@@ -111,6 +111,7 @@ public class PositionalInvertedIndexer  {
 					System.out.println(query + " Average precision is " + (summationOfPrecision / documentsOfNthQuery.size()));
 					meanAveragePrecision += summationOfPrecision / documentsOfNthQuery.size();
 					countOfQueries++;
+					i++;
 				}
 				System.out.println("Mean average precision for all the queries of given corpus is:" + meanAveragePrecision / countOfQueries);
 				double totalResponseTime = totalTimeTOExecuteQueries / (1000000 * 1000);
