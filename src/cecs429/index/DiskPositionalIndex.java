@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
  * Reads data from disk
  */
 public class DiskPositionalIndex implements Index{
-    static String path;
+    String path;
     DB db;
     ConcurrentMap<String, Long> diskIndex;
     File file;

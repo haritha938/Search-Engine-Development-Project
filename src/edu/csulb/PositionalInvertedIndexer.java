@@ -1,5 +1,6 @@
 package edu.csulb;
 
+import cecs429.classification.RocchioClassification;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
@@ -49,6 +50,7 @@ public class PositionalInvertedIndexer  {
 	static void milestone3(){
 		System.out.println("Following any of the below options");
 		System.out.println("1. Inexact retrieval");
+		System.out.println("2. Rocchio classification");
 		String input="";
 		try {
 			input = reader.readLine();
@@ -119,6 +121,16 @@ public class PositionalInvertedIndexer  {
 				System.out.println("Throughput is:" + countOfQueries / totalResponseTime);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else if(input.equals("2")){
+			try {
+				System.out.println("Please enter the corpus path:");
+				String classificationPath  = reader.readLine();
+				RocchioClassification rocchioClassification = new RocchioClassification(classificationPath);
+				Map<String, String> result = rocchioClassification.classify();
+				//System.out.println(result.toString());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
