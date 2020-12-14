@@ -145,10 +145,10 @@ public class RocchioClassification {
     }
 
     void mergeVocabs(){
-        vocabOfAllClasses.addAll(disputedIndex.getVocabulary());
-        vocabOfAllClasses.addAll(hamiltonIndex.getVocabulary());
-        vocabOfAllClasses.addAll(madisonIndex.getVocabulary());
-        vocabOfAllClasses.addAll(jayIndex.getVocabulary());
+        vocabOfAllClasses.addAll(disputedIndex.getTerms());
+        vocabOfAllClasses.addAll(hamiltonIndex.getTerms());
+        vocabOfAllClasses.addAll(madisonIndex.getTerms());
+        vocabOfAllClasses.addAll(jayIndex.getTerms());
     }
 
     private static class CentroidOfClass{
