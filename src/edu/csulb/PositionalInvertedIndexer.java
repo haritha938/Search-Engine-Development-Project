@@ -142,7 +142,9 @@ public class PositionalInvertedIndexer  {
 			try{
 				System.out.println("Please enter the corpus path:");
 				String classificationPath= reader.readLine();
-				KnnClassification knnClassification=new KnnClassification(classificationPath);
+				System.out.println("Please enter k value:");
+				String k= reader.readLine();
+				KnnClassification knnClassification=new KnnClassification(classificationPath,Integer.valueOf(k));
 				Map<String, String> result = knnClassification.classify();
 				System.out.println(result.toString());
 			}

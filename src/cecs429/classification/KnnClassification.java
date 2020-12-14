@@ -27,10 +27,10 @@ public class KnnClassification {
     Map<Integer,Map<String,Double>> hamiltonDocumentVectors = new HashMap<>();
     Map<Integer,Map<String,Double>> madisonDocumentVectors = new HashMap<>();
     Map<Integer,Map<String,Double>> jayDocumentVectors = new HashMap<>();
+    int k;
 
 
-
-    public KnnClassification(String path){
+    public KnnClassification(String path,int k){
         this.path = path;
         this.hamiltonPath = path + File.separator + "HAMILTON";
         this.jayPath = path + File.separator + "JAY";
@@ -41,10 +41,11 @@ public class KnnClassification {
         madisonIndex = new DiskPositionalIndex(madisonPath+File.separator+"index");
         disputedIndex = new DiskPositionalIndex(disputedPath+File.separator+"index");
         vocabOfAllClasses = new HashSet<>();
-        //classToCentroid = new HashMap<>();
+        this.k=k;
+
     }
     public Map<String, String> classify(){
-        int k=3;
+
         Map<String,String> result = new HashMap<>();
         mergeVocabs();
         Map<Integer,Map<String,Double>> disputedDocumentVectors = new HashMap<>();
@@ -52,9 +53,7 @@ public class KnnClassification {
         // Map<disputedDocId,Map<ClassName,Map<docId,distance>>>
         Map<Integer,Map<String,Map<Integer,Double>>> distFrmDisputedDocToClassifiedDocs=new HashMap<>();
 
-ArrayList<String> v=new ArrayList<>(vocabOfAllClasses);
-Collections.sort(v);
-System.out.println(v);
+
         for(String vocab:vocabOfAllClasses){
             List<Posting> disputedTermPostings = disputedIndex.getPostingsWithOutPositions(vocab);
             List<Posting> hamiltonTermPostings = hamiltonIndex.getPostingsWithOutPositions(vocab);
@@ -91,10 +90,7 @@ System.out.println(v);
                 }
 
         }
-        System.out.println( "Document vectors");
-        System.out.println( disputedDocumentVectors.get(5));
-       System.out.println( disputedDocumentVectors.get(6));
-        System.out.println( disputedDocumentVectors.get(7));
+
         DocumentCorpus disputedCorpus = DirectoryCorpus.loadDirectory(Paths.get(disputedPath).toAbsolutePath());
         disputedCorpus.getDocuments();
         hamiltonCorpus = DirectoryCorpus.loadDirectory(Paths.get(hamiltonPath).toAbsolutePath());
@@ -156,22 +152,16 @@ System.out.println(v);
 
         //index 0="hamilton",1="Madison",2="jay"
        int[] nearestClassCount=new int[3];
-        int docId;
-        System.out.println("------Before Sorting-------");
-        System.out.println("hamiltonEntryList:"+distToDoc.get("hamilton"));
-        System.out.println("madisonEntryList:"+distToDoc.get("madison"));
-        System.out.println("jayEntryList:"+distToDoc.get("jay"));
-        System.out.println("------After Sorting-------");
-         List<Map.Entry<Integer,Double>> hamiltonEntryList=new LinkedList<>(distToDoc.get("hamilton").entrySet());
-         Collections.sort(hamiltonEntryList, (o1, o2) -> o1.getValue().compareTo(o2.getValue()));
-        List<Map.Entry<Integer,Double>> madisonEntryList=new LinkedList<>(distToDoc.get("madison").entrySet());
-        Collections.sort(madisonEntryList, (o1, o2) -> o1.getValue().compareTo(o2.getValue()));
-        List<Map.Entry<Integer,Double>> jayEntryList=new LinkedList<>(distToDoc.get("jay").entrySet());
-        Collections.sort(jayEntryList, (o1, o2) -> o1.getValue().compareTo(o2.getValue()));
 
-        System.out.println("hamiltonEntryList:"+hamiltonEntryList);
-        System.out.println("madisonEntryList:"+madisonEntryList);
-        System.out.println("jayEntryList:"+jayEntryList);
+
+         List<Map.Entry<Integer,Double>> hamiltonEntryList=new LinkedList<>(distToDoc.get("hamilton").entrySet());
+         Collections.sort(hamiltonEntryList, Comparator.comparing(Map.Entry::getValue));
+        List<Map.Entry<Integer,Double>> madisonEntryList=new LinkedList<>(distToDoc.get("madison").entrySet());
+        Collections.sort(madisonEntryList, Comparator.comparing(Map.Entry::getValue));
+        List<Map.Entry<Integer,Double>> jayEntryList=new LinkedList<>(distToDoc.get("jay").entrySet());
+        Collections.sort(jayEntryList, Comparator.comparing(Map.Entry::getValue));
+
+
         Double ham,mad,jay;
         StringBuilder nearestTo=new StringBuilder();
        while (nearestClassCount[0]+nearestClassCount[1]+nearestClassCount[2]<k)
@@ -180,14 +170,14 @@ System.out.println(v);
            mad=madisonEntryList.get(nearestClassCount[1]).getValue();
            jay=jayEntryList.get(nearestClassCount[2]).getValue();
 
-           if(ham<jay && ham<mad) //h>m>=j || h>j>=m
+           if(ham<jay && ham<mad) //h<m<=j || h<j<=m
            {
                nearestTo.append(hamiltonCorpus.getDocument(hamiltonEntryList.get(nearestClassCount[0]).getKey()).getDocumentName()+"("+ham+");");
                nearestClassCount[0]++;
 
 
            }
-           else if((ham==jay && ham<mad)) //((jay==ham && jay>mad))
+           else if((ham==jay && ham<mad)) //((jay==ham && jay<mad))
 
            {
                nearestTo.append(hamiltonCorpus.getDocument(hamiltonEntryList.get(nearestClassCount[0]).getKey()).getDocumentName()+"("+ham+");");
@@ -195,7 +185,7 @@ System.out.println(v);
                nearestClassCount[0]++;
                nearestClassCount[2]++;
            }
-           else if((ham==mad && ham<jay))//((mad==ham && mad>jay))
+           else if((ham==mad && ham<jay))//((mad==ham && mad<jay))
 
            {
                nearestTo.append(hamiltonCorpus.getDocument(hamiltonEntryList.get(nearestClassCount[0]).getKey()).getDocumentName()+"("+ham+");");
@@ -203,20 +193,20 @@ System.out.println(v);
                nearestClassCount[0]++;
                nearestClassCount[1]++;
            }
-           else if(mad<ham && mad<jay) //h>m>=j || h>j>=m
+           else if(mad<ham && mad<jay) //h<m<=j || h<j<=m
            {
                nearestTo.append(madisonCorpus.getDocument(madisonEntryList.get(nearestClassCount[1]).getKey()).getDocumentName()+"("+mad+");");
                nearestClassCount[1]++;
 
            }
-           else if((mad==jay && mad<ham)) //((jay==mad && jay>ham))
+           else if((mad==jay && mad<ham)) //((jay==mad && jay<ham))
            {
                nearestTo.append(jayCorpus.getDocument(jayEntryList.get(nearestClassCount[2]).getKey()).getDocumentName()+"("+jay+");");
                nearestTo.append(madisonCorpus.getDocument(madisonEntryList.get(nearestClassCount[1]).getKey()).getDocumentName()+"("+mad+");");
                nearestClassCount[1]++;
                nearestClassCount[2]++;
            }
-           else if(jay<ham && jay<mad) //h>m>=j || h>j>=m
+           else if(jay<ham && jay<mad) //h<m<=j || h<j<=m
            {
                nearestTo.append(jayCorpus.getDocument(jayEntryList.get(nearestClassCount[2]).getKey()).getDocumentName()+"("+jay+");");
                nearestClassCount[2]++;
@@ -240,9 +230,7 @@ System.out.println(v);
        }
 
 
-        System.out.println("------------------------------------------------");
-       System.out.println("nearestClassCount[0]:"+ nearestClassCount[0]+", nearestClassCount[1]:"+ nearestClassCount[1]+", nearestClassCount[2]:"+ nearestClassCount[2]);
-       System.out.println("------------------------------------------------");
+
 
         if(nearestClassCount[0]>nearestClassCount[2] && nearestClassCount[0]>nearestClassCount[1]) //h>m>=j || h>j>=m
         {
@@ -307,10 +295,10 @@ System.out.println(v);
 
 
     void mergeVocabs(){
-        vocabOfAllClasses.addAll(disputedIndex.getVocabulary());
-        vocabOfAllClasses.addAll(hamiltonIndex.getVocabulary());
-        vocabOfAllClasses.addAll(madisonIndex.getVocabulary());
-        vocabOfAllClasses.addAll(jayIndex.getVocabulary());
+        vocabOfAllClasses.addAll(disputedIndex.getTerms());
+        vocabOfAllClasses.addAll(hamiltonIndex.getTerms());
+        vocabOfAllClasses.addAll(madisonIndex.getTerms());
+        vocabOfAllClasses.addAll(jayIndex.getTerms());
     }
 
 
