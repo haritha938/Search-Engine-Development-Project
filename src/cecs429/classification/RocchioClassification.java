@@ -67,7 +67,7 @@ public class RocchioClassification {
                                 -classToCentroid.get(classification).getCentroid().get(vocab),2);
                 }
                 //temp/=classToCentroid.get(classification).getLengthOfCentroidVector();
-                System.out.println("Dist to /"+classification+" for doc "+disputedCorpus.getDocument(documentId).getDocumentName()+" is "+temp);
+                System.out.println("Dist to /"+classification+" for doc "+disputedCorpus.getDocument(documentId).getDocumentName()+" is "+Math.sqrt(temp));
                 if(temp<similarity){
                     similarity = temp;
                     result.put(disputedCorpus.getDocument(documentId).getDocumentName(),classification);
