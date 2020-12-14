@@ -62,7 +62,7 @@ public class KnnClassification {
 
             if(disputedTermPostings!=null)
                 for(Posting posting:disputedTermPostings){
-                    Map<String,Double> disputedDocVector = disputedDocumentVectors.getOrDefault(posting.getDocumentId(), new HashMap<>());
+                    Map<String,Double> disputedDocVector = disputedDocumentVectors.getOrDefault(posting.getDocumentId(), getVector());
                     disputedDocVector.put(vocab, posting.getWdt()/disputedIndex.getDocLength(posting.getDocumentId()));
                     disputedDocumentVectors.put(posting.getDocumentId(),disputedDocVector);
                 }
@@ -70,21 +70,21 @@ public class KnnClassification {
 
             if(hamiltonTermPostings!=null)
                 for(Posting posting:hamiltonTermPostings){
-                    Map<String,Double> hamiltonDocVector = hamiltonDocumentVectors.getOrDefault(posting.getDocumentId(), new HashMap<>());
+                    Map<String,Double> hamiltonDocVector = hamiltonDocumentVectors.getOrDefault(posting.getDocumentId(), getVector());
                     hamiltonDocVector.put(vocab, posting.getWdt()/hamiltonIndex.getDocLength(posting.getDocumentId()));
                     hamiltonDocumentVectors.put(posting.getDocumentId(),hamiltonDocVector);
                 }
 
             if(madisonTermPostings!=null)
                 for(Posting posting:madisonTermPostings){
-                    Map<String,Double> madisonDocVector = madisonDocumentVectors.getOrDefault(posting.getDocumentId(), new HashMap<>());
+                    Map<String,Double> madisonDocVector = madisonDocumentVectors.getOrDefault(posting.getDocumentId(), getVector());
                     madisonDocVector.put(vocab, posting.getWdt()/madisonIndex.getDocLength(posting.getDocumentId()));
                     madisonDocumentVectors.put(posting.getDocumentId(),madisonDocVector);
                 }
 
             if(jayTermPostings!=null)
                 for(Posting posting:jayTermPostings){
-                    Map<String,Double> jayDocVector = jayDocumentVectors.getOrDefault(posting.getDocumentId(), new HashMap<>());
+                    Map<String,Double> jayDocVector = jayDocumentVectors.getOrDefault(posting.getDocumentId(), getVector());
                     jayDocVector.put(vocab, posting.getWdt()/jayIndex.getDocLength(posting.getDocumentId()));
                     jayDocumentVectors.put(posting.getDocumentId(),jayDocVector);
                 }
@@ -113,8 +113,8 @@ public class KnnClassification {
                 Double distance=Double.valueOf(0);
                 for (String term : vocabOfAllClasses) {
 
-                    distance+= Math.pow((hamiltonDocumentVectors.get(hamiltonDocId).containsKey(term)? hamiltonDocumentVectors.get(hamiltonDocId).get(term) : 0)
-                              - (disputedDocVector.containsKey(term)?disputedDocVector.get(term):0),2);
+                    distance+= Math.pow(hamiltonDocumentVectors.get(hamiltonDocId).get(term)
+                            - disputedDocVector.get(term),2);
                 }
                 distToDoc.get("hamilton").put(hamiltonDocId,Math.sqrt(distance));
             }
@@ -123,8 +123,8 @@ public class KnnClassification {
                 Double distance=Double.valueOf(0);
                 for (String term : vocabOfAllClasses) {
 
-                    distance+= Math.pow((madisonDocumentVectors.get(madisonDocId).containsKey(term)? madisonDocumentVectors.get(madisonDocId).get(term) : 0)
-                            - (disputedDocVector.containsKey(term)?disputedDocVector.get(term):0),2);
+                    distance+= Math.pow(madisonDocumentVectors.get(madisonDocId).get(term)
+                            - disputedDocVector.get(term),2);
                 }
                 distToDoc.get("madison").put(madisonDocId,Math.sqrt(distance));
             }
@@ -133,8 +133,8 @@ public class KnnClassification {
                 Double distance=Double.valueOf(0);
                 for (String term : vocabOfAllClasses) {
 
-                    distance+= Math.pow((jayDocumentVectors.get(jayDocId).containsKey(term)? jayDocumentVectors.get(jayDocId).get(term) : 0)
-                            - (disputedDocVector.containsKey(term)?disputedDocVector.get(term):0),2);
+                    distance+= Math.pow(jayDocumentVectors.get(jayDocId).get(term)
+                            -disputedDocVector.get(term),2);
                 }
                 distToDoc.get("jay").put(jayDocId,Math.sqrt(distance));
             }
@@ -291,7 +291,13 @@ public class KnnClassification {
         }
     }
 
-
+    Map<String, Double> getVector(){
+        Map<String,Double> vector = new HashMap<>();
+        for(String vocab:vocabOfAllClasses){
+            vector.put(vocab,0.0);
+        }
+        return vector;
+    }
 
 
     void mergeVocabs(){

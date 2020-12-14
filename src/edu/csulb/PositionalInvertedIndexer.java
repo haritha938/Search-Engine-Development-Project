@@ -50,7 +50,7 @@ public class PositionalInvertedIndexer  {
 
 	static void milestone3(){
 		System.out.println("Following any of the below options");
-		System.out.println("1. Inexact retrieval");
+		System.out.println("1. Inexact retrieval - Vocab elimination");
 		System.out.println("2. Rocchio classification");
 		System.out.println("3. KNN classification");
 		String input="";
@@ -146,13 +146,16 @@ public class PositionalInvertedIndexer  {
 				String k= reader.readLine();
 				KnnClassification knnClassification=new KnnClassification(classificationPath,Integer.valueOf(k));
 				Map<String, String> result = knnClassification.classify();
-				System.out.println(result.toString());
+				for(String documentName:result.keySet()){
+					System.out.println("\""+documentName+"\""+"nearest to:");
+					System.out.println(result.get(documentName));
+				}
 			}
 			catch (Exception e)
 			{
 				e.printStackTrace();
 			}
-		}//TODO: Here remaining options may be continued as if-else ladder
+		}
 	}
 
 	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {

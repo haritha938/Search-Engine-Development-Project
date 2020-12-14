@@ -51,7 +51,7 @@ public class RocchioClassification {
             if(postings==null)
                 continue;
             for(Posting posting:postings){
-                Map<String,Double> documentVector = disputedDocumentVectors.getOrDefault(posting.getDocumentId(), new HashMap<>());
+                Map<String,Double> documentVector = disputedDocumentVectors.getOrDefault(posting.getDocumentId(), getVector());
                 documentVector.put(vocab, posting.getWdt()/disputedIndex.getDocLength(posting.getDocumentId()));
                 disputedDocumentVectors.put(posting.getDocumentId(),documentVector);
             }
@@ -63,7 +63,7 @@ public class RocchioClassification {
             for(String classification:classToCentroid.keySet()){
                 double temp=0.0;
                 for(String vocab:vocabOfAllClasses){
-                    temp+=Math.pow((disputedDocumentVectors.get(documentId).get(vocab)==null?0:disputedDocumentVectors.get(documentId).get(vocab))
+                    temp+=Math.pow((disputedDocumentVectors.get(documentId).get(vocab))
                                 -classToCentroid.get(classification).getCentroid().get(vocab),2);
                 }
                 //temp/=classToCentroid.get(classification).getLengthOfCentroidVector();
@@ -142,6 +142,14 @@ public class RocchioClassification {
             length+=Math.pow(normalizedVectorComponent/madisonCorpus.getCorpusSize(),2);
         }
         return new CentroidOfClass(centroid,Math.sqrt(length));
+    }
+
+    Map<String, Double> getVector(){
+        Map<String,Double> vector = new HashMap<>();
+        for(String vocab:vocabOfAllClasses){
+            vector.put(vocab,0.0);
+        }
+        return vector;
     }
 
     void mergeVocabs(){
