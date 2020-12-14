@@ -1,5 +1,6 @@
 package edu.csulb;
 
+import cecs429.classification.KnnClassification;
 import cecs429.classification.RocchioClassification;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
@@ -51,6 +52,7 @@ public class PositionalInvertedIndexer  {
 		System.out.println("Following any of the below options");
 		System.out.println("1. Inexact retrieval");
 		System.out.println("2. Rocchio classification");
+		System.out.println("3. KNN classification");
 		String input="";
 		try {
 			input = reader.readLine();
@@ -132,6 +134,20 @@ public class PositionalInvertedIndexer  {
 				Map<String, String> result = rocchioClassification.classify();
 				//System.out.println(result.toString());
 			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else if(input.equals("3"))
+		{
+			try{
+				System.out.println("Please enter the corpus path:");
+				String classificationPath= reader.readLine();
+				KnnClassification knnClassification=new KnnClassification(classificationPath);
+				Map<String, String> result = knnClassification.classify();
+				System.out.println(result.toString());
+			}
+			catch (Exception e)
+			{
 				e.printStackTrace();
 			}
 		}//TODO: Here remaining options may be continued as if-else ladder
