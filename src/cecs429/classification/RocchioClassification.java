@@ -67,7 +67,7 @@ public class RocchioClassification {
                                 -classToCentroid.get(classification).getCentroid().get(vocab),2);
                 }
                 //temp/=classToCentroid.get(classification).getLengthOfCentroidVector();
-                System.out.println("Dist to /"+classification+" for doc "+disputedCorpus.getDocument(documentId).getDocumentName()+" is "+temp);
+                System.out.println("Dist to /"+classification+" for doc "+disputedCorpus.getDocument(documentId).getDocumentName()+" is "+Math.sqrt(temp));
                 if(temp<similarity){
                     similarity = temp;
                     result.put(disputedCorpus.getDocument(documentId).getDocumentName(),classification);
@@ -145,10 +145,10 @@ public class RocchioClassification {
     }
 
     void mergeVocabs(){
-        vocabOfAllClasses.addAll(disputedIndex.getVocabulary());
-        vocabOfAllClasses.addAll(hamiltonIndex.getVocabulary());
-        vocabOfAllClasses.addAll(madisonIndex.getVocabulary());
-        vocabOfAllClasses.addAll(jayIndex.getVocabulary());
+        vocabOfAllClasses.addAll(disputedIndex.getTerms());
+        vocabOfAllClasses.addAll(hamiltonIndex.getTerms());
+        vocabOfAllClasses.addAll(madisonIndex.getTerms());
+        vocabOfAllClasses.addAll(jayIndex.getTerms());
     }
 
     private static class CentroidOfClass{
