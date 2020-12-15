@@ -109,6 +109,8 @@ public class PositionalInvertedIndexer  {
 							summationOfPrecision += (float) precisionCount / resultCount;
 							precisionCount++;
 							System.out.println("Relevant: " + rankedRetrieval.getDocumentName() + " at index " + resultCount);
+						}else{
+							System.out.println("Not relevant: " + rankedRetrieval.getDocumentName() + " at index " + resultCount);
 						}
 						resultCount++;
 					}
