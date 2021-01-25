@@ -84,6 +84,14 @@ public class AndQuery implements Query {
 		return result;
 	}
 
+	/**
+	 * This class is used for boolean queries so this method never get called
+	 */
+	@Override
+	public List<Posting> getPostingsWithoutPositions(Index index) {
+		return null;
+	}
+
 	@Override
 	public boolean isNegativeQuery() {
 		return false;

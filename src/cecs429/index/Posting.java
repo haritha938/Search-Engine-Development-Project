@@ -9,7 +9,7 @@ import java.util.List;
 public class Posting {
 	private int mDocumentId;
 	private List<Integer> mPositionsList;
-	private String mDocumentName;
+	double wdt;
 
 	public Posting(int documentId) {
 		mDocumentId = documentId;
@@ -20,9 +20,14 @@ public class Posting {
 		this.mPositionsList = positionList;
 	}
 
-	public Posting(int documentId,int position) {
+	public Posting(int mDocumentId, double wdt) {
+		this.mDocumentId = mDocumentId;
+		this.wdt = wdt;
+	}
+
+	public Posting(int documentId, int position) {
 		mDocumentId = documentId;
-		mPositionsList = new ArrayList();
+		mPositionsList = new ArrayList<>();
 		mPositionsList.add(position);
 	}
 
@@ -36,6 +41,14 @@ public class Posting {
 
 	public List<Integer> getPositions(){
 		return mPositionsList;
+	}
+
+	public double getWdt() {
+		return wdt;
+	}
+
+	public void setWdt(double wdt) {
+		this.wdt = wdt;
 	}
 
 	@Override

@@ -9,10 +9,16 @@ import java.util.Map;
  */
 public interface Index {
 	/**
-	 * Retrieves a list of Postings of documents that contain the given term.
+	 * Retrieves a list of Postings of documents that contain the given term with positions
 	 */
-	List<Posting> getPostings(String term);
-	
+	List<Posting> getPostingsWithPositions(String term);
+
+	/**
+	 * Retrieves a list of Postings of documents that contain the given term without positions
+	 */
+	List<Posting> getPostingsWithOutPositions(String term);
+
+
 	/**
 	 * A (sorted) list of all terms in the index vocabulary.
 	 */
@@ -28,9 +34,15 @@ public interface Index {
 	 * to generate k-grams
 	 */
 	void generateKGrams(int kGramSize);
-	/**
-	 * Retrieves the InvertedIndex
-	 */
-	Map<String,List<Posting>> getIndex();
 
+	/**
+	 * @return list of terms of given corpus
+	 */
+	List<String> getTerms();
+
+	/**
+	 * @return document weight of
+	 * @param documentID
+	 */
+	double getDocLength(int documentID);
 }

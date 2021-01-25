@@ -2,21 +2,21 @@ package test;
 
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.DocumentCorpus;
-import cecs429.index.Index;
-import cecs429.index.PositionalInvertedIndex;
-import cecs429.index.Posting;
-import cecs429.index.SoundexIndex;
+import cecs429.index.*;
 import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.TokenProcessor;
 import edu.csulb.PositionalInvertedIndexer;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -30,10 +30,11 @@ public class SoundexTest {
     private static Map<String, List<Posting>> dictionary = new HashMap<>();
     /* Creating the tokenprocessor and soundexindex instance variables*/
     static TokenProcessor tokenProcessor=new AdvanceTokenProcessor();
-    private SoundexIndex testSoundexIndex;
+    private static SoundexIndex testSoundexIndex;
     static Index testIndex=null;
     private final String authorQuery;
     private final List<Integer> expectedDocumentList;
+    static DiskPositionalIndex diskPositionalTestIndex;
     public SoundexTest(String authorQuery, List<Integer> expectedDocumentList)
     {
         this.authorQuery=authorQuery;
@@ -48,18 +49,18 @@ public class SoundexTest {
         //Testing single term query
         query1 = "Robert";
         List<Integer> ExpectedDoucmentListForQuery1 = new ArrayList<>();
-        ExpectedDoucmentListForQuery1.add(0);
         ExpectedDoucmentListForQuery1.add(1);
+        ExpectedDoucmentListForQuery1.add(2);
         //Testing AND query
         query2 = "Rupert";
         List<Integer> ExpectedDoucmentListForQuery2 = new ArrayList<>();
-        ExpectedDoucmentListForQuery2.add(0);
         ExpectedDoucmentListForQuery2.add(1);
+        ExpectedDoucmentListForQuery2.add(2);
         //Testing OR query
         query3 = "Mark";
         List<Integer> ExpectedDoucmentListForQuery3 = new ArrayList<>();
-        ExpectedDoucmentListForQuery3.add(0);
-        ExpectedDoucmentListForQuery3.add(2);
+        ExpectedDoucmentListForQuery3.add(1);
+        ExpectedDoucmentListForQuery3.add(3);
         //Testing query that returns null
         query4 = "call";
         List<Integer> ExpectedDoucmentListForQuery4=new ArrayList<>();
@@ -69,25 +70,25 @@ public class SoundexTest {
         expectedResult.add(new Object[]{query4,ExpectedDoucmentListForQuery4});
         return expectedResult;
     }
+    @BeforeClass
+    public static void PrepareTest(){
 
-    @Test
-    public void TestQuery() {
         //IdentifyCorpus and CreateIndex --using same methods from the project..but providing params so as to access the test corpus
-        DirectoryCorpus corpus = DirectoryCorpus.loadJsonDirectory(Paths.get("./files"), ".json");
-        // Creating indexCorpus arguments for getDeclaredMethod
-        Class[] arg = new Class[2];
-        arg[0] = DocumentCorpus.class;
-        arg[1]= TokenProcessor.class;
-        PositionalInvertedIndexer indexer=new PositionalInvertedIndexer();
-        // Instantiating the testSoundexIndex
+        DirectoryCorpus corpus = DirectoryCorpus.loadDirectory(Paths.get("./files"));
+
+        Class[] arg = new Class[3];
+        arg[0] = Path.class;
+        arg[1]=DocumentCorpus.class;
+        arg[2]=TokenProcessor.class;
         testSoundexIndex=new SoundexIndex();
         try {
-            Method method= indexer.getClass().getDeclaredMethod("indexCorpus", DocumentCorpus.class, TokenProcessor.class);
+            Method method = PositionalInvertedIndexer.class.getDeclaredMethod("createIndex", arg);
             method.setAccessible(true);
-            // generating the positional inverted index
-            testIndex=(Index)method.invoke(indexer.getClass(),corpus,new AdvanceTokenProcessor());
+            method.invoke(PositionalInvertedIndexer.class,Paths.get("./files"),corpus,tokenProcessor);
+            diskPositionalTestIndex = new DiskPositionalIndex(Paths.get("./files").toString() + File.separator + "index");
             // getting the soundex index
-            testSoundexIndex=indexer.getSoundexIndex();
+            testSoundexIndex=PositionalInvertedIndexer.getSoundexIndex();
+
         }
         catch ( NoSuchMethodException e)
         {
@@ -97,6 +98,12 @@ public class SoundexTest {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+
+    }
+
+    @Test
+    public void TestQuery() {
+
         // Getting the actual posting lists of the given query
         List<Posting> actualSoundexList = PositionalInvertedIndexer.getSoundexIndexPostings(authorQuery,testSoundexIndex,tokenProcessor);
         List<Integer> actualDocumentList = new ArrayList<>();

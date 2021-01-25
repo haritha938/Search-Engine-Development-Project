@@ -1,19 +1,25 @@
 package test;
 
 import cecs429.documents.DirectoryCorpus;
+import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
+import cecs429.index.DiskPositionalIndex;
 import cecs429.index.Index;
 import cecs429.index.Posting;
 import cecs429.text.AdvanceTokenProcessor;
 import cecs429.text.TokenProcessor;
 import edu.csulb.PositionalInvertedIndexer;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -28,6 +34,8 @@ public class QueryTest {
     static Index TestIndex=null;
     private final String TestQuery;
     private final List<Integer> expectedDocumentList;
+    static DiskPositionalIndex diskPositionalTestIndex;
+    static Map<String,List<String>> kgramIndex=new HashMap<>();
 
     public QueryTest(String TestQuery, List<Integer> expectedDocumentList)
     {
@@ -46,19 +54,19 @@ public class QueryTest {
         query1 = "amazing";
 
         List<Integer> ExpectedDoucmentListForQuery1 = new ArrayList<>();
-        ExpectedDoucmentListForQuery1.add(4);
+        ExpectedDoucmentListForQuery1.add(8);
 
         //Testing AND query
         query2 = "Search engine";
         List<Integer> ExpectedDoucmentListForQuery2 = new ArrayList<>();
-        ExpectedDoucmentListForQuery2.add(1);
+        ExpectedDoucmentListForQuery2.add(5);
 
         //Testing OR query
         query3 = "CECS529 + TEST";
         List<Integer> ExpectedDoucmentListForQuery3 = new ArrayList<>();
-        ExpectedDoucmentListForQuery3.add(0);
-        ExpectedDoucmentListForQuery3.add(3);
         ExpectedDoucmentListForQuery3.add(4);
+        ExpectedDoucmentListForQuery3.add(7);
+        ExpectedDoucmentListForQuery3.add(8);
 
         //Testing query that returns null
         query4 = "call";
@@ -67,39 +75,39 @@ public class QueryTest {
         //testing phrasequery
         query5="\"CECS529 course is amazing\"";
         List<Integer> ExpectedDoucmentListForQuery5 = new ArrayList<>();
-        ExpectedDoucmentListForQuery5.add(4);
+        ExpectedDoucmentListForQuery5.add(8);
 
         //Testing Not query
         query6 = "Test -case -hey";
         List<Integer> ExpectedDoucmentListForQuery6 = new ArrayList<>();
-        ExpectedDoucmentListForQuery6.add(3);
+        ExpectedDoucmentListForQuery6.add(7);
 
         //Testing wild query
         //query7="t*t case";
         query7="t*s*";
         List<Integer> ExpectedDoucmentListForQuery7 = new ArrayList<>();
-        ExpectedDoucmentListForQuery7.add(0);
-        ExpectedDoucmentListForQuery7.add(2);
-        ExpectedDoucmentListForQuery7.add(3);
+        ExpectedDoucmentListForQuery7.add(4);
+        ExpectedDoucmentListForQuery7.add(6);
+        ExpectedDoucmentListForQuery7.add(7);
 
         //Wildphrase query
         query8="\"CECS5*9 co*rse is amaz*\"";
         List<Integer> ExpectedDoucmentListForQuery8 = new ArrayList<>();
-        ExpectedDoucmentListForQuery8.add(4);
+        ExpectedDoucmentListForQuery8.add(8);
 
         //Wild query with AND-NOT
         query9="t*t -case -is";
         List<Integer> ExpectedDoucmentListForQuery9 = new ArrayList<>();
-        ExpectedDoucmentListForQuery9.add(3);
+        ExpectedDoucmentListForQuery9.add(7);
 
         //Wildcard terms with AND
         query10="t*t ca*e";
         List<Integer> ExpectedDoucmentListForQuery10 = new ArrayList<>();
-        ExpectedDoucmentListForQuery10.add(0);
+        ExpectedDoucmentListForQuery10.add(4);
 
         expectedResult.add(new Object[]{query1,ExpectedDoucmentListForQuery1});
         expectedResult.add(new Object[]{query2,ExpectedDoucmentListForQuery2});
-        expectedResult.add(new Object[]{query3,ExpectedDoucmentListForQuery3});
+       expectedResult.add(new Object[]{query3,ExpectedDoucmentListForQuery3});
         expectedResult.add(new Object[]{query4,ExpectedDoucmentListForQuery4});
         expectedResult.add(new Object[]{query5,ExpectedDoucmentListForQuery5});
         expectedResult.add(new Object[]{query6,ExpectedDoucmentListForQuery6});
@@ -110,24 +118,25 @@ public class QueryTest {
 
         return expectedResult;
     }
+    @BeforeClass
+    public static void PrepareTest(){
 
-
-    @Test
-    public void TestQuery() {
         //IdentifyCorpus and CreateIndex --using same methods from the project..but providing params so as to access the test corpus
-        DirectoryCorpus corpus = DirectoryCorpus.loadTextDirectory(Paths.get("./files"), ".txt");
-        Class[] arg = new Class[2];
-        arg[0] = DocumentCorpus.class;
-        arg[1]=TokenProcessor.class;
-        try {
-            Method method = PositionalInvertedIndexer.class.getDeclaredMethod("indexCorpus", arg);
-            method.setAccessible(true);
-            //Generating the index by calling indexCorpus method
-            TestIndex= (Index) method.invoke(PositionalInvertedIndexer.class,corpus,  new AdvanceTokenProcessor());
-            //adding k-grams to the index
-            TestIndex.generateKGrams(3);
-        }
+        DirectoryCorpus corpus = DirectoryCorpus.loadDirectory(Paths.get("./files"));
 
+        Class[] arg = new Class[3];
+        arg[0] = Path.class;
+        arg[1]=DocumentCorpus.class;
+        arg[2]=TokenProcessor.class;
+        try {
+            Method method = PositionalInvertedIndexer.class.getDeclaredMethod("createIndex", arg);
+            method.setAccessible(true);
+            method.invoke(PositionalInvertedIndexer.class,Paths.get("./files"),corpus,tokenProcessor);
+            diskPositionalTestIndex = new DiskPositionalIndex(Paths.get("./files").toString() + File.separator + "index");
+            diskPositionalTestIndex.generateKGrams(3);
+            kgramIndex= diskPositionalTestIndex.getKGrams();
+
+        }
         catch ( NoSuchMethodException e)
         {
             e.getStackTrace();
@@ -137,8 +146,17 @@ public class QueryTest {
             e.printStackTrace();
         }
 
+    }
+
+    @Test
+    public void TestQuery() {
+
+
+
+
+
         //Calculating actual result
-        List<Posting> ActualPostingList = PositionalInvertedIndexer.ParseQueryNGetpostings(TestQuery, TestIndex, tokenProcessor);
+        List<Posting> ActualPostingList = PositionalInvertedIndexer.ParseQueryNGetpostings(TestQuery, diskPositionalTestIndex, tokenProcessor);
         List<Integer> ActualDocumentList = new ArrayList<>();
         if (ActualPostingList != null) {
             for (Posting posting : ActualPostingList) {

@@ -1,94 +1,357 @@
 package edu.csulb;
 
+import cecs429.classification.KnnClassification;
+import cecs429.classification.RocchioClassification;
 import cecs429.documents.DirectoryCorpus;
 import cecs429.documents.Document;
 import cecs429.documents.DocumentCorpus;
 import cecs429.documents.JsonFileDocument;
-import cecs429.index.Index;
-import cecs429.index.PositionalInvertedIndex;
-import cecs429.index.Posting;
-import cecs429.index.SoundexIndex;
-import cecs429.query.BooleanQueryParser;
-import cecs429.query.Query;
+import cecs429.index.*;
+import cecs429.query.*;
 import cecs429.text.AdvanceTokenProcessor;
-import cecs429.text.BasicTokenProcessor;
 import cecs429.text.EnglishTokenStream;
 import cecs429.text.TokenProcessor;
-
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PositionalInvertedIndexer  {
 	static TokenProcessor tokenProcessor = null;
-	// Creating a soundexindex instance variable and assigning it as null.
+	// Creating a soundexIndex instance variable and assigning it as null.
 	static SoundexIndex soundexindex=null;
+	static DiskIndexWriter diskIndexWriter=null;
+	static DocumentCorpus corpus;
+	static Index index;
+	static BufferedReader reader;
+	static int corpusSize;
+	static Path path;
+	static DiskPositionalIndex diskPositionalIndex;
+	static SoundexPositionalIndex soudnexpositionalindex;
+	static SoundexDiskIndexWriter soundexdiskwriter;
+
+
 	public static void main(String[] args) {
-		BufferedReader reader =
-				new BufferedReader(new InputStreamReader(System.in));
+		reader = new BufferedReader(new InputStreamReader(System.in));
+		System.out.println("1. Milestone 2 - for creating disk Index, Boolean queries and Ranked queries");
+		System.out.println("2. Milestone 3 - For Inexact Querying, Text classification etc");
 		try {
-			System.out.println("Enter your preferred token processor's serial from below options");
-			System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
-			System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
-			loop:while(true) {
-				String tokenizationInput = reader.readLine();
-				switch (tokenizationInput) {
-					case "1":
-						tokenProcessor = new BasicTokenProcessor();
-						break loop;
-					case "2":
-						tokenProcessor = new AdvanceTokenProcessor();
-						break loop;
-					default:
-						System.out.println("Please enter a valid input");
-						break;
+			String input = reader.readLine();
+			if(input.equals("1"))
+				loadCorpusAndCreateIndex();
+			else
+				milestone3();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	static void milestone3(){
+		System.out.println("Following any of the below options");
+		System.out.println("1. Inexact retrieval - Vocab elimination");
+		System.out.println("2. Rocchio classification");
+		System.out.println("3. KNN classification");
+		String input="";
+		try {
+			input = reader.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(input.equals("1")) {
+			try {
+				System.out.println("Please enter the corpus path:");
+				path = Paths.get(reader.readLine());
+				corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
+				corpusSize = corpus.getCorpusSize();
+				tokenProcessor = new AdvanceTokenProcessor();
+				diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+				soudnexpositionalindex = new SoundexPositionalIndex(path.toString() + File.separator + "index");
+				diskPositionalIndex.generateKGrams(3);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			RankedQueryParser rankedQueryParser = new RankedQueryParser(diskPositionalIndex
+					, corpusSize
+					, path.toString() + File.separator + "index"
+					, tokenProcessor);
+
+			File queriesFile = new File(path.toString() + File.separator + "relevance" + File.separator + "queries");
+			try (FileReader queriesFileReader = new FileReader(queriesFile);
+				 BufferedReader queriesBufferedReader = new BufferedReader(queriesFileReader)) {
+				List<String> stringList = Files.readAllLines(Paths.get(path.toString() + File.separator + "relevance" + File.separator + "qrel"));
+				String query;
+				int i = 0;
+				double meanAveragePrecision = 0;
+				int countOfQueries = 0;
+				double totalTimeTOExecuteQueries = 0;
+				while ((query = queriesBufferedReader.readLine()) != null) {
+					double summationOfPrecision = 0;
+					int precisionCount = 1;
+					int resultCount = 1;
+					long startTime = System.nanoTime();
+					SearchResult searchResult = rankedQueryParser.getPostings(query, true);
+					long endTime = System.nanoTime();
+					totalTimeTOExecuteQueries += (float) (endTime - startTime);
+					List<Integer> documentsOfNthQuery = Arrays.stream(stringList.get(i)
+							.split(" +"))
+							.map(Integer::parseInt)
+							.collect(Collectors.toList());
+					for (Accumulator accumulator : searchResult.getSearchResults()) {
+						Document rankedRetrieval = corpus.getDocument(accumulator.getDocumentId());
+						int releventIndex = Collections.binarySearch(
+								documentsOfNthQuery
+								, Integer.parseInt(
+										rankedRetrieval.getDocumentName().substring(0, rankedRetrieval.getDocumentName().indexOf('.')))
+						);
+						if (releventIndex >= 0) {
+							summationOfPrecision += (float) precisionCount / resultCount;
+							precisionCount++;
+							System.out.println("Relevant: " + rankedRetrieval.getDocumentName() + " at index " + resultCount);
+						}else{
+							System.out.println("Not relevant: " + rankedRetrieval.getDocumentName() + " at index " + resultCount);
+						}
+						resultCount++;
+					}
+					System.out.println(query + " Average precision is " + (summationOfPrecision / documentsOfNthQuery.size()));
+					meanAveragePrecision += summationOfPrecision / documentsOfNthQuery.size();
+					countOfQueries++;
+					i++;
+				}
+				System.out.println("Mean average precision for all the queries of given corpus is:" + meanAveragePrecision / countOfQueries);
+				double totalResponseTime = totalTimeTOExecuteQueries / (1000000 * 1000);
+				System.out.println("Mean Response time is:" + totalResponseTime / countOfQueries);
+				System.out.println("Throughput is:" + countOfQueries / totalResponseTime);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else if(input.equals("2")){
+			try {
+				System.out.println("Please enter the corpus path:");
+				String classificationPath  = reader.readLine();
+				RocchioClassification rocchioClassification = new RocchioClassification(classificationPath);
+				Map<String, String> result = rocchioClassification.classify();
+				//System.out.println(result.toString());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		else if(input.equals("3"))
+		{
+			try{
+				System.out.println("Please enter the corpus path:");
+				String classificationPath= reader.readLine();
+				System.out.println("Please enter k value:");
+				String k= reader.readLine();
+				KnnClassification knnClassification=new KnnClassification(classificationPath,Integer.valueOf(k));
+				Map<String, String> result = knnClassification.classify();
+				for(String documentName:result.keySet()){
+					System.out.println("\""+documentName+"\""+"nearest to:");
+					System.out.println(result.get(documentName));
 				}
 			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
+		// Initializing the the soundexIndex index
+		soundexindex=new SoundexIndex();
+		PositionalInvertedIndex index = new PositionalInvertedIndex();
+		JsonFileDocument file;
+		Map<String,Integer> termToFreq = new HashMap<>();
+		List<Double> weightOfDocuments = new ArrayList<>();
+		for(Document document:corpus.getDocuments()){
+			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
+			Iterable<String> strings=englishTokenStream.getTokens();
+			int i=1;
+			for(String string: strings){
+				for(String term:tokenProcessor.processToken(string)) {
+					if(!term.isEmpty()) {
+						index.addTerm(term, document.getId(), i);
+						termToFreq.put(term,termToFreq.getOrDefault(term,0)+1);
+					}
+				}
+				i++;
+				if(string.contains("-")){
+					for(String splitString:string.split("-+")){
+						String term=tokenProcessor.normalization(splitString).toLowerCase();
+						if(!term.isEmpty()) {
+							index.addToVocab(term);
+						}
+					}
+				}else{
+					String term=tokenProcessor.normalization(string).toLowerCase();
+					if(!term.isEmpty()) {
+						index.addToVocab(term);
+					}
+				}
+			}
+			double wdt = 0;
+			for(String termKey:termToFreq.keySet()){
+				wdt+=Math.pow(1+Math.log(termToFreq.get(termKey)),2);
+			}
+			weightOfDocuments.add(Math.sqrt(wdt));
+			termToFreq.clear();
+			try {
+				englishTokenStream.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			EnglishTokenStream authorTokenStream;
+			Iterable<String> authorStrings;
+			if(document.hasAuthor()) {
+				file = (JsonFileDocument) document;
+				// tokenizing the author field using EnglishTokenStream
+				authorTokenStream=new EnglishTokenStream(file.getAuthor());
+				authorStrings=authorTokenStream.getTokens();
+				for(String str: authorStrings){
+					// Processing each token generated from author field
+					for(String authorTerm: tokenProcessor.processToken(str)){
+						if(!authorTerm.equals("")){
+							// adding it to the soundexIndex using addTerm method
+							soundexindex.addTerm(authorTerm,file.getId());
+						}
+
+					}
+				}
+			}
+		}
+		index.setWeightOfDocuments(weightOfDocuments);
+		diskIndexWriter.writeWeightOfDocuments(weightOfDocuments);
+		return index;
+	}
+
+
+	public static  boolean loadCorpusAndCreateIndex()
+	{
+
+		try {
 			System.out.println("Please enter your desired search directory...");
-			Path path = Paths.get(reader.readLine());
-			DocumentCorpus corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
-			long startTime=System.nanoTime();
-			Index index = indexCorpus(corpus,tokenProcessor);
-			index.generateKGrams(3);
-			long endTime=System.nanoTime();
-			System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
+			path = Paths.get(reader.readLine());
+			corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
+			corpusSize = corpus.getCorpusSize();
+			System.out.println("Would you like to create an Index or run the queries? Enter \"Y\" to create an index and \"N\" to run queries ");
+			String programMode = reader.readLine();
+			if (programMode.equalsIgnoreCase("y") || programMode.equalsIgnoreCase("yes")) {
+				tokenProcessor = new AdvanceTokenProcessor();
+				createIndex(path, corpus, tokenProcessor);
+				return false;
+			} else {
+				if(new File(path.toString() + File.separator + "index").exists()) {
+					if(new File(path.toString() + File.separator + "index").listFiles().length<9)
+					{
+						System.out.println("No Index files are available. Create an Index!");
+						return false;
+					}
+					else {
+						tokenProcessor = new AdvanceTokenProcessor();
+						diskPositionalIndex = new DiskPositionalIndex(path.toString() + File.separator + "index");
+						soudnexpositionalindex = new SoundexPositionalIndex(path.toString() + File.separator + "index");
+						diskPositionalIndex.generateKGrams(3);
+						runQueries();
+					}
+				}
+				else
+				{
+					System.out.println("No Index files are available. Create an Index!");
+					return false;
+				}
+			}
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		return true;
+	}
+
+	// Returns the soundexIndex instance variable.
+	public static SoundexIndex getSoundexIndex(){
+		return soundexindex;
+	}
+	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
+	{
+		BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);
+		Query queryobject = booleanQueryParser.parseQuery(query.trim());
+		List<Posting> resultList = null;
+		if (queryobject != null) {
+			resultList = queryobject.getPostings(index);
+		}
+		return resultList;
+	}
+
+	public static SearchResult getRankedPostings(String query,Index index,TokenProcessor tokenProcessor){
+		RankedQueryParser rankedQueryParser = new RankedQueryParser(index
+				,corpusSize
+				,path.toString()+File.separator+"index"
+				,tokenProcessor);
+		SearchResult searchResult = rankedQueryParser.getPostings(query,false);
+		return  searchResult;
+	}
+
+	// Returns the resultant postings from the given author query
+	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
+
+		List<Posting> resultPostings=index.getPostingsWithOutPositions(tokenProcessor.processToken(query).get(0));
+		if(resultPostings!=null){
+			return resultPostings;
+		}
+		return null;
+	}
+	public static List<Posting> getSoundexDiskIndexPostings(String query,SoundexPositionalIndex index,TokenProcessor tokenprocessor){
+		List<Posting> resultPostings=index.getPostingsWithOutPositions(tokenprocessor.processToken(query).get(0));
+		if(resultPostings!=null)
+			return resultPostings;
+		return null;
+	}
+
+	public static DocumentCorpus createIndex(Path path, DocumentCorpus corpus, TokenProcessor tokenProcessor){
+
+		diskIndexWriter = new DiskIndexWriter(path.toString()
+				+File.separator+"index");
+		soundexdiskwriter=new SoundexDiskIndexWriter(path.toString()+File.separator+"index");
+		long startTime=System.nanoTime();
+		index = indexCorpus(corpus,tokenProcessor);
+		List<Long> memoryAddresses = diskIndexWriter.writeIndex(index);
+		diskIndexWriter.writeVocabularyToDisk(index.getVocabulary());
+		List<Long> soundexAddresses=  soundexdiskwriter.writeSoundexIndex(soundexindex);
+		index.generateKGrams(3);
+		Map<String,List<String>> kgramIndex=index.getKGrams();
+		List<Long> kgramAddress=  diskIndexWriter.writeKgramIndex(kgramIndex);
+		long endTime=System.nanoTime();
+		System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
+		return corpus;
+	}
+
+
+
+	static void runQueries(){
+		try {
+			System.out.println("Entering query mode");
+			System.out.println("Which mode would you like to search:");
+			System.out.println("1.Boolean retrieval");
+			System.out.println("2.Ranked retrieval");
+			String queryMode = reader.readLine();
 			System.out.println("Please enter your search query...");
 
 			String query=null;
 			query=reader.readLine();
 			String documentName=null;
 			boolean found;
-			while (query.length()>0) {
+			start:while (query.length()>0) {
 				if (query.equals(":q")) {
 					break;
 				} else if (query.startsWith(":index")) {
-					System.out.println("Enter your preferred token processor's serial from below options");
-					System.out.println("1. Basic Token processor - Stems based on spaces and removes special characters and changes terms to lowercase");
-					System.out.println("2. Advance Token processor - Remove alpha-numeric beginning and end, apostropes and quotation marks, handles hyphens, lowercase letters and uses stemming");
-					loop:while(true) {
-						int tokenizationInput = Integer.parseInt(reader.readLine());
-						switch (tokenizationInput) {
-							case 1:
-								tokenProcessor = new BasicTokenProcessor();
-								break loop;
-							case 2:
-								tokenProcessor = new AdvanceTokenProcessor();
-								break loop;
-							default:
-								System.out.println("Please enter a valid input");
-								break;
-						}
-					}
-					path = Paths.get(query.substring(query.indexOf(' ') + 1));
-					corpus = DirectoryCorpus.loadDirectory(path.toAbsolutePath());
-					startTime=System.nanoTime();
-					index = indexCorpus(corpus, tokenProcessor);
-					index.generateKGrams(3);
-					endTime=System.nanoTime();
-					System.out.println("Indexing duration(milli sec):"+ (float)(endTime-startTime)/1000000);
+					//if loadCorpusAndCreateIndex() returns false=> Implies that index is not available and user has chosen not to create one
+					if(!loadCorpusAndCreateIndex())
+						break;
 				}
 				else if(query.startsWith(":stem")){
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
@@ -98,10 +361,9 @@ public class PositionalInvertedIndexer  {
 				else if(query.startsWith(":author")){
 					// Getting the next immediate word after author
 					String tokenTerm=query.substring(query.indexOf(' ')+1);
-					// Getting the soundexindex positings for the given term
-					List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
-					//System.out.println(resultPostings.size());
-
+					// Getting the soundexIndex postings for the given term
+					//List<Posting> resultPostings=getSoundexIndexPostings(tokenTerm,soundexindex,tokenProcessor);
+					List<Posting> resultPostings=getSoundexDiskIndexPostings(tokenTerm,soudnexpositionalindex,tokenProcessor);
 					// If the resultant postings are not null, print the postings
 					if(resultPostings!=null){
 						for(Posting p: resultPostings){
@@ -132,6 +394,7 @@ public class PositionalInvertedIndexer  {
 										documentData = printDocument.read();
 									}
 									printDocument.close();
+									System.out.println();
 									found = true;
 								}
 							}
@@ -146,72 +409,126 @@ public class PositionalInvertedIndexer  {
 					}
 				}
 				else if (query.equals(":vocab")) {
-					index.getVocabulary()
+					diskPositionalIndex.getVocabulary()
 							.stream()
-							.limit(100000)
+							.limit(1000)
 							.forEach(System.out::println);
-					System.out.println("Size of the vocabulary is" + index.getVocabulary().size());
+					System.out.println("Size of the vocabulary is" + diskPositionalIndex.getVocabulary().size());
 				}
-				else{
-					List<Posting> resultList = ParseQueryNGetpostings(query,index,tokenProcessor);
-					if (resultList != null && resultList.size()!=0) {
-						for (Posting p : resultList) {
-							Document document=corpus.getDocument(p.getDocumentId());
-							System.out.println( document.getTitle()+" (\""+document.getDocumentName()+"\")" );
-						}
-						System.out.println("Total number of documents fetched: " + resultList.size());
-
-
-						while(true)
-						{
-							System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
-							documentName = reader.readLine();
-							if(documentName.equalsIgnoreCase("query"))
-							{
-								break;
+				else {
+					if (queryMode.equals("1")){
+						List<Posting> resultList = ParseQueryNGetpostings(query, diskPositionalIndex, tokenProcessor);
+						if (resultList != null && resultList.size() != 0) {
+							for (Posting p : resultList) {
+								Document document = corpus.getDocument(p.getDocumentId());
+								System.out.println(document.getTitle() + " (\"" + document.getDocumentName() + "\")");
 							}
-							if(documentName.equalsIgnoreCase(":q"))
-							{
-								break;
-							}
-							found=false;
-							for(Posting p: resultList) {
-								Document document=corpus.getDocument(p.getDocumentId());
-								if (documentName.equals(document.getTitle())) {
-									Reader printDocument = document.getContent();
-									int data = printDocument.read();
-									while (data != -1) {
-										System.out.print((char) data);
-										data = printDocument.read();
-									}
-									printDocument.close();
-									System.out.println();
-									found=true;
+							System.out.println("Total number of documents fetched: " + resultList.size());
+							while (true) {
+								System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
+								documentName = reader.readLine();
+								if (documentName.equalsIgnoreCase("query")) {
+									break;
 								}
-
-
+								if (documentName.equalsIgnoreCase(":q")) {
+									break;
+								}
+								found = false;
+								for (Posting p : resultList) {
+									Document document = corpus.getDocument(p.getDocumentId());
+									if (documentName.equals(document.getTitle())) {
+										Reader printDocument = document.getContent();
+										int data = printDocument.read();
+										while (data != -1) {
+											System.out.print((char) data);
+											data = printDocument.read();
+										}
+										printDocument.close();
+										System.out.println();
+										found = true;
+									}
+								}
+								if (!found) {
+									System.out.println("Wrong document name. Enter document names from the above list !");
+								} else {
+									System.out.println("Do you want to print other selected documents ? (yes/no)");
+									String answer = reader.readLine().toLowerCase();
+									if (answer.equals("yes"))
+										continue;
+									break;
+								}
 							}
-							if(!found) {
-								System.out.println("Wrong document name. Enter document names from the above list !");
-							}
-							else {
-								System.out.println("Do you want to print other selected documents ? (yes/no)");
+						} else {
+							System.out.println("No such text can be found in the Corpus!");
+						}
+					}else {
 
-								String answer = reader.readLine().toLowerCase();
-								if (answer.equals("yes"))
-									continue;
-								break;
+						SearchResult searchResult = getRankedPostings(query,diskPositionalIndex,tokenProcessor);
+						List<Accumulator> rankedQueries = searchResult.getSearchResults();
+						if (rankedQueries != null && rankedQueries.size() != 0) {
+							for (Accumulator accumulator : rankedQueries) {
+								Document document = corpus.getDocument(accumulator.getDocumentId());
+								System.out.println(document.getTitle() + " (\"" + document.getDocumentName() + "\") Calculated Accumulator value: " + accumulator.getPriority());
+							}
+							if(!query.equals(searchResult.getSuggestedString())) {
+								System.out.println("\""+searchResult.getSuggestedString() +"\" may yield better search results for given query" +
+										"\n would like to try? (y/n)");
+								query = reader.readLine();
+								if(query.equalsIgnoreCase("y")) {
+									query = searchResult.getSuggestedString();
+									continue start;
+								}
+							}
+							while (true) {
+								System.out.println("Enter document name to view the content (or) type \"query\" to start new search:");
+								documentName = reader.readLine();
+								if (documentName.equalsIgnoreCase("query")) {
+									break;
+								}
+								if (documentName.equalsIgnoreCase(":q")) {
+									break;
+								}
+								found = false;
+								for (Accumulator p : rankedQueries) {
+									Document document = corpus.getDocument(p.getDocumentId());
+									if (documentName.equals(document.getTitle())) {
+										Reader printDocument = document.getContent();
+										int data = printDocument.read();
+										while (data != -1) {
+											System.out.print((char) data);
+											data = printDocument.read();
+										}
+										printDocument.close();
+										System.out.println();
+										found = true;
+									}
+								}
+								if (!found) {
+									System.out.println("Wrong document name. Enter document names from the above list !");
+								} else {
+									System.out.println("Do you want to print other selected documents ? (yes/no)");
+									String answer = reader.readLine().toLowerCase();
+									if (answer.equals("yes"))
+										continue;
+									break;
+								}
+							}
+						} else {
+							System.out.println("No such text can be found in the Corpus!");
+							if(!query.equals(searchResult.getSuggestedString())) {
+								System.out.println("\""+searchResult.getSuggestedString() +"\" may yield better search results for given query" +
+										"\n would like to try? (y/n)");
+								query = reader.readLine();
+								if(query.equalsIgnoreCase("y")) {
+									query = searchResult.getSuggestedString();
+									continue start;
+								}
 							}
 						}
-					} else {
-						System.out.println("No such text can be found in the Corpus!");
 					}
 				}
-				if(documentName!=null)
-				{
-					if(documentName.equals(":q"))
+				if (documentName != null && documentName.equals(":q"))
 					break;
-				}
 				System.out.println("Please enter your search query...");
 				query=reader.readLine();
 			}
@@ -220,93 +537,6 @@ public class PositionalInvertedIndexer  {
 		{
 			e.printStackTrace();
 		}
-	}
-
-	private static Index indexCorpus(DocumentCorpus corpus,TokenProcessor tokenProcessor) {
-		// Initializing the the soundexIndex index
-		soundexindex=new SoundexIndex();
-		PositionalInvertedIndex index = new PositionalInvertedIndex();
-		JsonFileDocument file;
-		for(Document document:corpus.getDocuments()){
-			EnglishTokenStream englishTokenStream=new EnglishTokenStream(document.getContent());
-			Iterable<String> strings=englishTokenStream.getTokens();
-			int i=1;
-			for(String string: strings){
-				for(String term:tokenProcessor.processToken(string)) {
-					index.addTerm(term, document.getId(), i);
-				}
-				i++;
-				if(string.contains("-")){
-					for(String splitString:string.split("-+")){
-						String term=tokenProcessor.normalization(splitString).toLowerCase();
-						if(!term.isEmpty())
-							index.addToVocab(term);
-					}
-				}else{
-					String term=tokenProcessor.normalization(string).toLowerCase();
-					if(!term.isEmpty())
-						index.addToVocab(term);
-				}
-			}
-			try {
-				englishTokenStream.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			EnglishTokenStream authorTokenStream;
-			Iterable<String> authorStrings;
-			if(document.hasAuthor()) {
-				file = (JsonFileDocument) document;
-				// tokenizing the author field using EnglishTokenStream
-				authorTokenStream=new EnglishTokenStream(file.getAuthor());
-				authorStrings=authorTokenStream.getTokens();
-				for(String str: authorStrings){
-					// Processing each token generated from author field
-					for(String authorTerm: tokenProcessor.processToken(str)){
-						if(!authorTerm.equals("")){
-							// adding it to the soundexindex using addTerm method
-							soundexindex.addTerm(authorTerm,file.getId());
-						}
-
-					}
-				}
-			}
-
-
-		}
-		return index;
-	}
-
-	private static void printDocument(String filePath)throws IOException{
-		BufferedReader reader=new BufferedReader(new FileReader(filePath));
-		String line;
-		while((line=reader.readLine())!=null){
-			System.out.println(line);
-		}
-
-	}
-	// Returns the soundexIndex instance variable.
-	public static SoundexIndex getSoundexIndex(){
-		return soundexindex;
-	}
-	public static List<Posting> ParseQueryNGetpostings(String query,Index index,TokenProcessor tokenProcessor)
-	{
-		BooleanQueryParser booleanQueryParser = new BooleanQueryParser(tokenProcessor);
-		Query queryobject = booleanQueryParser.parseQuery(query.trim());
-		List<Posting> resultList = null;
-		if (queryobject != null) {
-			resultList = queryobject.getPostings(index);
-		}
-		return resultList;
-	}
-	// Returns the resultant postings from the given author query
-	public static List<Posting> getSoundexIndexPostings(String query, SoundexIndex index, TokenProcessor tokenProcessor){
-
-		List<Posting> resultPostings=index.getPostings(tokenProcessor.processToken(query).get(0));
-		if(resultPostings!=null){
-			return resultPostings;
-		}
-		return null;
 	}
 }
 

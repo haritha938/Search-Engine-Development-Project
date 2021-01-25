@@ -9,11 +9,13 @@ public class PositionalInvertedIndex implements Index {
     private final Map<String, List<Posting>> mIndex;
     private List<String> mVocabulary;
     private Map<String,List<String>> kGramsOfVocabulary;
+    private List<Double> weightOfDocuments;
 
     public PositionalInvertedIndex(){
         mIndex = new HashMap<>();
         mVocabulary = new ArrayList<>();
         kGramsOfVocabulary = new HashMap<>();
+        weightOfDocuments = new ArrayList<>();
     }
 
     public void addTerm(String term, int documentId,int position){
@@ -43,7 +45,12 @@ public class PositionalInvertedIndex implements Index {
      * Fetches list of posting of single 
      * @param term
      */
-    public List<Posting> getPostings(String term){
+    public List<Posting> getPostingsWithPositions(String term){
+        return mIndex.get(term);
+    }
+
+    @Override
+    public List<Posting> getPostingsWithOutPositions(String term) {
         return mIndex.get(term);
     }
 
@@ -75,9 +82,16 @@ public class PositionalInvertedIndex implements Index {
     }
 
     @Override
-    public Map<String, List<Posting>> getIndex() {
-        return mIndex;
+    public List<String> getTerms() {
+        return new ArrayList<>(mIndex.keySet());
     }
 
+    @Override
+    public double getDocLength(int documentID) {
+        return weightOfDocuments.get(documentID-1);//-1 since document ordering starts from zero
+    }
 
+    public void setWeightOfDocuments(List<Double> weightOfDocuments) {
+        this.weightOfDocuments = weightOfDocuments;
+    }
 }

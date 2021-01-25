@@ -9,8 +9,14 @@ import java.util.List;
  */
 public interface Query {
     /**
-     * Retrieves a list of postings for the query, using an Index as the source.
+     * Retrieves a list of postings with positions for the query, using an Index as the source.
      */
     List<Posting> getPostings(Index index);
+
+    /**
+     * Retrieves a list of postings without positions for the query, using an Index as the source.
+     */
+    List<Posting> getPostingsWithoutPositions(Index index);
+
     boolean isNegativeQuery();
 }

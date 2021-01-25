@@ -4,7 +4,7 @@ import cecs429.text.SoundexAlgorithm;
 
 import java.util.*;
 
-public class SoundexIndex {
+public class SoundexIndex implements SoundexIndexInterface{
     // Creating Map with soundex hash as key and List of postings as values
     private final Map<String, List<Posting>> mIndex;
     // Creating soundexAlgorithm instance variable
@@ -39,13 +39,27 @@ public class SoundexIndex {
         }
     }
     // getting the soundex postings for the given term
-    public List<Posting> getPostings(String term){
-        String soundexString=soundexAlgorithm.getSoundexCode(term);
-        return mIndex.get(soundexString);
-    }
 
     public Integer getSize(){
         return mIndex.size();
     }
 
+  /* public Map<String,List<Posting>> getIndex(){
+        return mIndex;
+    }*/
+
+    @Override
+    public List<Posting> getPostingsWithOutPositions(String term) {
+        String soundexString=soundexAlgorithm.getSoundexCode(term);
+        return mIndex.get(soundexString);
+    }
+
+
+    @Override
+    public List<String> getTerms() {
+        return new ArrayList<>(mIndex.keySet());
+    }
+    public List<Posting> getPostinglist(String term){
+        return mIndex.get(term);
+    }
 }

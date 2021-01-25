@@ -36,7 +36,32 @@ public class OrQuery implements Query {
 				for (int i = 1; i < ChildernCount; i++) {
 					postings = mChildren.get(i).getPostings(index);
 					if (postings != null) {
-						ResultantPostings = OrMerge(ResultantPostings, postings);
+						ResultantPostings = OrMerge(ResultantPostings, postings,true);
+					}
+				}
+				result = ResultantPostings;
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public List<Posting> getPostingsWithoutPositions(Index index) {
+		List<Posting> result = null;
+
+		int ChildernCount=mChildren.size();
+		//if there are any orQuery objects then perform orMerge on them
+		if(ChildernCount>0) {
+			if (ChildernCount == 1) {
+				result = mChildren.get(0).getPostingsWithoutPositions(index);
+			}else{
+				List<Posting> postings = null;
+				List<Posting> ResultantPostings = null;
+				ResultantPostings = mChildren.get(0).getPostingsWithoutPositions(index);
+				for (int i = 1; i < ChildernCount; i++) {
+					postings = mChildren.get(i).getPostingsWithoutPositions(index);
+					if (postings != null) {
+						ResultantPostings = OrMerge(ResultantPostings, postings,false);
 					}
 
 				}
@@ -54,7 +79,7 @@ public class OrQuery implements Query {
 
 
 	//Logic for merging two list using OrMerge
-	public List<Posting> OrMerge(List<Posting> A,List<Posting> B) {
+	public List<Posting> OrMerge(List<Posting> A,List<Posting> B,boolean isBooleanQuery) {
 		List<Posting> OrMergeResult = new ArrayList<>();
 		int aDocId = 0, bDocId = 0;
 		int aSize = A.size();
@@ -66,11 +91,17 @@ public class OrQuery implements Query {
 			bDocId = B.get(j).getDocumentId();
 
 			if (aDocId == bDocId) {
-				OrMergeResult.add(
-						new Posting(
-								A.get(i).getDocumentId()
-								,mergePositions(A.get(i).getPositions(),B.get(j).getPositions()
-						)));
+				if(isBooleanQuery) {
+					OrMergeResult.add(
+							new Posting(
+									A.get(i).getDocumentId()
+									, mergePositions(A.get(i).getPositions(), B.get(j).getPositions())));
+				}else{
+					OrMergeResult.add(
+							new Posting(
+									A.get(i).getDocumentId()
+									, A.get(i).getWdt() + B.get(j).getWdt()));
+				}
 				i++;
 				j++;
 			} else if (aDocId < bDocId) {

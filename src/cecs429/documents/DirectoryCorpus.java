@@ -54,7 +54,7 @@ public class DirectoryCorpus implements DocumentCorpus {
 		
 		// Next build the mapping from document ID to document.
 		HashMap<Integer, Document> result = new HashMap<>();
-		int nextId = 0;
+		int nextId = 1;
 		for (Path file : allFiles) {
 			// Use the registered factory for the file's extension.
 			result.put(nextId, mFactories.get(getFileExtension(file)).createFileDocument(file, nextId));

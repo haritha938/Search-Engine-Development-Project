@@ -42,11 +42,11 @@ public class PhraseLiteral implements Query {
 		List<Posting> postingListResult
 				= mTerms[0].contains("*")
 				? new WildcardLiteral(mTerms[0], tokenProcessor,isNegativeLiteral).getPostings(index)
-				: index.getPostings(tokenProcessor.processToken(mTerms[0]).get(0));
+				: index.getPostingsWithPositions(tokenProcessor.processToken(mTerms[0]).get(0));
 		List<Posting> postingListInput=null;
 		int distanceBetweenTerms = 0;
 		for (int i = 1; i < mTerms.length; i++) {
-			postingListInput = mTerms[i].contains("*") ? new WildcardLiteral(mTerms[i], tokenProcessor,isNegativeLiteral).getPostings(index) : index.getPostings(tokenProcessor.processToken(mTerms[i]).get(0));
+			postingListInput = mTerms[i].contains("*") ? new WildcardLiteral(mTerms[i], tokenProcessor,isNegativeLiteral).getPostings(index) : index.getPostingsWithPositions(tokenProcessor.processToken(mTerms[i]).get(0));
 			postingListResult=PositionalMerge(postingListResult,postingListInput,++distanceBetweenTerms);
 
 			if (postingListResult == null) {
@@ -54,6 +54,11 @@ public class PhraseLiteral implements Query {
 			}
 		}
 		return postingListResult;
+	}
+
+	@Override
+	public List<Posting> getPostingsWithoutPositions(Index index) {
+		return null;
 	}
 
 	@Override

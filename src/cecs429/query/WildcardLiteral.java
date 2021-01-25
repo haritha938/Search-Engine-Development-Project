@@ -102,6 +102,23 @@ public class WildcardLiteral implements Query {
         return new OrQuery(queries).getPostings(index);
     }
 
+    public List<Posting> getPostingsWithoutPositions(Index index) {
+
+        List<Query> queries = new ArrayList<>();
+        TermLiteral previousTermLiteral=null;
+        for(String term:getPossibleStrings(index)){
+            TermLiteral termLiteral = new TermLiteral(term,tokenProcessor,isNegativeLiteral);
+            /*  Checking if termLiteral is same as previously added termLiteral as ques* generate - questions. || questions, || question
+                after stemming all of them become question. So, we are pruning remaining list for faster search results
+             */
+            if(queries.size()==0 || !previousTermLiteral.getmTerm().equals(termLiteral.getmTerm())) {
+                queries.add(termLiteral);
+                previousTermLiteral = termLiteral;
+            }
+        }
+        return new OrQuery(queries).getPostingsWithoutPositions(index);
+    }
+
     @Override
     public boolean isNegativeQuery() {
         return isNegativeLiteral;

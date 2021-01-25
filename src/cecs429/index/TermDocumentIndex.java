@@ -36,10 +36,9 @@ public class TermDocumentIndex implements Index {
 	}
 	
 	@Override
-	public List<Posting> getPostings(String term) {
+	public List<Posting> getPostingsWithPositions(String term) {
 		List<Posting> results = new ArrayList<>();
-		
-		// TODO: implement this method.
+
 		// Binary search the mVocabulary array for the given term.
 		// Walk down the mMatrix row for the term and collect the document IDs (column indices)
 		// of the "true" entries.
@@ -50,8 +49,12 @@ public class TermDocumentIndex implements Index {
 		}
 		return results;
 	}
-	
-	
+
+	@Override
+	public List<Posting> getPostingsWithOutPositions(String term) {
+		return null;
+	}
+
 	public List<String> getVocabulary() {
 		return Collections.unmodifiableList(mVocabulary);
 	}
@@ -66,8 +69,15 @@ public class TermDocumentIndex implements Index {
 
 	}
 
+
+
 	@Override
-	public Map<String, List<Posting>> getIndex() {
+	public List<String> getTerms() {
 		return null;
+	}
+
+	@Override
+	public double getDocLength(int documentID) {
+		return 0;
 	}
 }
